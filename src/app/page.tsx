@@ -1,16 +1,17 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import Navbar from '../components/Navbar';
 import ProductCard from '../components/ProductCard';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
 const CATEGORIES = [
-  { id: 'men-clothing', label: "Men's Clothing", labelTi: 'ክዳን ወዲ', emoji: '👔' },
-  { id: 'women-clothing', label: "Women's Clothing", labelTi: 'ክዳን ጓል', emoji: '👗' },
-  { id: 'kids-clothing', label: "Kids' Clothing", labelTi: 'ክዳን ቆልዓ', emoji: '👶' },
-  { id: 'electronics', label: 'Electronics', labelTi: 'ኤለክትሮኒክስ', emoji: '📱' },
-  { id: 'shoes', label: 'Shoes', labelTi: 'ሳእኒ', emoji: '👟' },
-  { id: 'accessories', label: 'Accessories', labelTi: 'ኣጽዋር', emoji: '👜' },
+  { id: 'women-clothing', label: "Women", labelTi: 'ጓል', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=400&q=80' },
+  { id: 'men-clothing', label: "Men", labelTi: 'ወዲ', image: 'https://images.unsplash.com/photo-1520975954732-35dd22299614?w=400&q=80' },
+  { id: 'shoes', label: "Shoes", labelTi: 'ሳእኒ', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400&q=80' },
+  { id: 'electronics', label: "Electronics", labelTi: 'ኤለክትሮኒክስ', image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&q=80' },
+  { id: 'accessories', label: "Accessories", labelTi: 'ኣጽዋር', image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&q=80' },
+  { id: 'beauty', label: "Beauty", labelTi: 'ጽባቐ', image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=400&q=80' },
 ];
 
 async function getProducts(params: string) {
@@ -22,73 +23,141 @@ async function getProducts(params: string) {
 }
 
 export default async function HomePage() {
-  const [featured, newArrivals] = await Promise.all([
+  const [topRated, newArrivals] = await Promise.all([
     getProducts('sort=-rating'),
     getProducts('newArrival=true&sort=-createdAt'),
   ]);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <section className="bg-gradient-to-br from-rose-600 via-rose-700 to-rose-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 flex flex-col md:flex-row items-center gap-12">
-          <div className="flex-1 text-center md:text-left">
-            <p className="text-rose-200 text-sm font-semibold uppercase tracking-wider mb-4">World&apos;s First Eritrean Diaspora Store</p>
-            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-4">Shop in<br /><span className="text-rose-200">Tigrinya</span><br />or English</h1>
-            <p className="text-rose-100 text-lg mb-8 max-w-md">2,000+ products. Free delivery across Europe. Secure Stripe payments.</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link href="/products" className="bg-white text-rose-700 font-bold px-8 py-4 rounded-2xl hover:bg-rose-50 transition-colors text-lg text-center">Shop Now</Link>
-              <Link href="/track" className="border-2 border-white text-white font-bold px-8 py-4 rounded-2xl hover:bg-white/10 transition-colors text-lg text-center">Track Order</Link>
+
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-[#0f0f0f] text-white">
+        <div className="absolute inset-0">
+          <Image
+            src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=1600&q=80"
+            alt="Fashion hero"
+            fill
+            className="object-cover opacity-40"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-36">
+          <div className="max-w-xl">
+            <span className="inline-block bg-rose-600 text-white text-xs font-bold px-3 py-1 rounded-full mb-4 tracking-widest uppercase">
+              ኣዝማሪኖ · Azmarino
+            </span>
+            <h1 className="text-4xl md:text-6xl font-black leading-tight mb-4">
+              Shop in<br />
+              <span className="text-rose-400">Tigrinya</span><br />
+              or English.
+            </h1>
+            <p className="text-gray-300 text-lg mb-8 leading-relaxed">
+              1,184+ products. Free delivery across Europe.<br />Secure payments. Built for the diaspora.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link href="/products" className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-8 py-3.5 rounded-xl transition-colors text-base">
+                Shop Now
+              </Link>
+              <Link href="/track" className="bg-white/10 hover:bg-white/20 backdrop-blur text-white font-semibold px-6 py-3.5 rounded-xl transition-colors border border-white/20 text-base">
+                Track Order
+              </Link>
             </div>
-          </div>
-          <div className="flex-1 max-w-sm">
-            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 text-center">
-              <div className="text-6xl mb-4">🛍️</div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {[['2K+','Products'],['FREE','EU Delivery'],['30d','Returns'],['🔒','Stripe Pay']].map(([v,l]) => (
-                  <div key={l} className="bg-white/10 rounded-xl p-3"><div className="text-2xl font-black">{v}</div><div className="text-rose-200">{l}</div></div>
-                ))}
-              </div>
+            <div className="mt-10 flex flex-wrap gap-6 text-sm text-gray-400">
+              <span className="flex items-center gap-2"><span className="text-green-400">✓</span> Free EU Delivery over €50</span>
+              <span className="flex items-center gap-2"><span className="text-green-400">✓</span> 30-Day Returns</span>
+              <span className="flex items-center gap-2"><span className="text-green-400">✓</span> Secure Stripe Payments</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="py-12 bg-white">
+      {/* Categories */}
+      <section className="py-14 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-black text-slate-800 mb-6">Shop by Category</h2>
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <p className="text-rose-600 text-sm font-bold uppercase tracking-widest mb-1">Browse</p>
+              <h2 className="text-2xl md:text-3xl font-black text-gray-900">Shop by Category</h2>
+            </div>
+            <Link href="/products" className="text-sm font-semibold text-gray-500 hover:text-rose-600 transition-colors hidden sm:block">
+              View all →
+            </Link>
+          </div>
           <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
             {CATEGORIES.map(cat => (
-              <Link key={cat.id} href={`/products?category=${cat.id}`} className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all group">
-                <span className="text-3xl">{cat.emoji}</span>
-                <span className="text-xs font-semibold text-slate-700 text-center group-hover:text-rose-700">{cat.label}</span>
-                <span className="text-xs text-slate-400 text-center">{cat.labelTi}</span>
+              <Link
+                key={cat.id}
+                href={`/products?category=${cat.id}`}
+                className="group relative aspect-square rounded-2xl overflow-hidden bg-gray-100"
+              >
+                <Image
+                  src={cat.image}
+                  alt={cat.label}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  sizes="(max-width: 768px) 33vw, 16vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-2.5 text-white">
+                  <p className="font-bold text-sm leading-tight">{cat.label}</p>
+                  <p className="text-xs text-white/70">{cat.labelTi}</p>
+                </div>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {featured.length > 0 && (
-        <section className="py-12 bg-slate-50">
+      {/* Top Rated Products */}
+      {topRated.length > 0 && (
+        <section className="py-14 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black text-slate-800">Featured Products</h2>
-              <Link href="/products" className="text-rose-600 font-semibold text-sm hover:text-rose-700">View All →</Link>
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <p className="text-rose-600 text-sm font-bold uppercase tracking-widest mb-1">Curated</p>
+                <h2 className="text-2xl md:text-3xl font-black text-gray-900">Top Rated</h2>
+              </div>
+              <Link href="/products" className="text-sm font-semibold text-gray-500 hover:text-rose-600 transition-colors">
+                See all →
+              </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {featured.map((p: any) => <ProductCard key={p._id} product={p} />)}
+              {topRated.map((p: any) => <ProductCard key={p._id} product={p} />)}
             </div>
           </div>
         </section>
       )}
 
+      {/* Promo Banner */}
+      <section className="py-10 bg-rose-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-white text-center md:text-left">
+            <div>
+              <h3 className="text-2xl md:text-3xl font-black mb-1">Free delivery on orders over €50</h3>
+              <p className="text-rose-200">Shipping to Germany, Netherlands, Sweden, Norway, UK + more</p>
+            </div>
+            <Link href="/products" className="flex-shrink-0 bg-white text-rose-600 font-bold px-8 py-3 rounded-xl hover:bg-rose-50 transition-colors">
+              Shop Now
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* New Arrivals */}
       {newArrivals.length > 0 && (
-        <section className="py-12 bg-white">
+        <section className="py-14 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-black text-slate-800">New Arrivals ✨</h2>
-              <Link href="/products?newArrival=true" className="text-rose-600 font-semibold text-sm hover:text-rose-700">View All →</Link>
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <p className="text-rose-600 text-sm font-bold uppercase tracking-widest mb-1">Fresh</p>
+                <h2 className="text-2xl md:text-3xl font-black text-gray-900">New Arrivals</h2>
+              </div>
+              <Link href="/products?newArrival=true" className="text-sm font-semibold text-gray-500 hover:text-rose-600 transition-colors">
+                See all →
+              </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {newArrivals.map((p: any) => <ProductCard key={p._id} product={p} />)}
@@ -97,29 +166,44 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="py-12 bg-slate-50 border-t border-slate-200">
+      {/* Trust */}
+      <section className="py-12 border-t border-gray-100 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[{emoji:'🚚',title:'Free EU Delivery',sub:'On all orders to Europe'},{emoji:'🔒',title:'Secure Payment',sub:'Powered by Stripe'},{emoji:'↩️',title:'30-Day Returns',sub:'Hassle-free returns'},{emoji:'💬',title:'Sara AI Support',sub:'Chat in Tigrinya or English'}].map(b => (
-              <div key={b.title} className="flex flex-col items-center gap-2 p-4">
-                <span className="text-3xl">{b.emoji}</span>
-                <div className="font-bold text-slate-800">{b.title}</div>
-                <div className="text-sm text-slate-500">{b.sub}</div>
+            {[
+              { icon: '🚚', title: 'Free EU Delivery', sub: 'On orders over €50' },
+              { icon: '🔒', title: 'Secure Payment', sub: 'Powered by Stripe' },
+              { icon: '↩️', title: '30-Day Returns', sub: 'Hassle-free returns' },
+              { icon: '🤖', title: 'Sara AI Support', sub: 'Help in Tigrinya & English' },
+            ].map(item => (
+              <div key={item.title} className="flex flex-col items-center gap-2">
+                <span className="text-3xl">{item.icon}</span>
+                <p className="font-bold text-gray-900 text-sm">{item.title}</p>
+                <p className="text-xs text-gray-500">{item.sub}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <footer className="bg-slate-900 text-slate-400 py-8 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div><span className="text-white font-black text-xl">Azmarino</span><span className="ml-2 text-slate-500">ኣዝማሪኖ</span></div>
-          <div className="flex gap-6 text-sm">
-            <Link href="/products" className="hover:text-white transition-colors">Shop</Link>
-            <Link href="/track" className="hover:text-white transition-colors">Track Order</Link>
-            <a href="mailto:support@azmarino.online" className="hover:text-white transition-colors">Support</a>
+      {/* Footer */}
+      <footer className="bg-[#0f0f0f] text-gray-400 py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 bg-rose-600 rounded-lg flex items-center justify-center">
+                <span className="text-white font-black text-xs">A</span>
+              </div>
+              <span className="text-white font-black text-lg">Azmarino</span>
+              <span className="text-gray-500">· ኣዝማሪኖ</span>
+            </div>
+            <p className="text-sm text-center">© {new Date().getFullYear()} Azmarino. The world's first Eritrean diaspora store.</p>
+            <div className="flex gap-4 text-sm">
+              <Link href="/track" className="hover:text-white transition-colors">Track Order</Link>
+              <Link href="/products" className="hover:text-white transition-colors">Shop</Link>
+              <a href="mailto:support@azmarino.online" className="hover:text-white transition-colors">Support</a>
+            </div>
           </div>
-          <p className="text-xs text-slate-600">© {new Date().getFullYear()} Azmarino. All rights reserved.</p>
         </div>
       </footer>
     </div>

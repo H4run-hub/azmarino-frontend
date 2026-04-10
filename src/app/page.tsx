@@ -22,7 +22,10 @@ async function getProducts(params: string) {
 }
 
 export default async function HomePage() {
-  const [featured, newArrivals] = await Promise.all([getProducts('featured=true'), getProducts('newArrival=true')]);
+  const [featured, newArrivals] = await Promise.all([
+    getProducts('sort=-rating'),
+    getProducts('newArrival=true&sort=-createdAt'),
+  ]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -71,7 +74,7 @@ export default async function HomePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-black text-slate-800">Featured Products</h2>
-              <Link href="/products?featured=true" className="text-rose-600 font-semibold text-sm hover:text-rose-700">View All →</Link>
+              <Link href="/products" className="text-rose-600 font-semibold text-sm hover:text-rose-700">View All →</Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {featured.map((p: any) => <ProductCard key={p._id} product={p} />)}

@@ -42,16 +42,19 @@ export default function Navbar() {
   };
 
   return (
-    <header className={`sticky top-0 z-50 bg-white transition-all duration-200 ${scrolled ? 'shadow-[0_2px_20px_rgba(0,0,0,0.08)]' : 'border-b border-gray-100'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center h-14 gap-3">
+    <header className={`sticky top-0 z-50 bg-white transition-all duration-200 ${scrolled ? 'shadow-[0_2px_15px_rgba(0,0,0,0.05)]' : 'border-b border-gray-100'}`}>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+        <div className="flex items-center h-11 gap-2">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 flex-shrink-0 mr-2">
-            <div className="w-7 h-7 bg-rose-600 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-black text-xs tracking-tighter">AZ</span>
+          <Link href="/" className="flex items-center flex-shrink-0 mr-2">
+            <div className="relative w-28 h-7">
+              <img
+                src="/logo.jpg"
+                alt="Azmarino"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span className="font-black text-gray-900 text-base tracking-tight">Azmarino</span>
           </Link>
 
           {/* Search — desktop */}

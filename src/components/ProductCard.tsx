@@ -95,19 +95,19 @@ export default function ProductCard({ product }: Props) {
       </div>
 
       {/* Info */}
-      <div className="p-3 flex flex-col gap-0.5">
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug">{name}</h3>
-        <div className="flex items-center justify-between mt-1.5">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-sm font-black text-gray-900">€{product.price.toFixed(2)}</span>
+      <div className="p-1.5 flex flex-col gap-0">
+        <h3 className="text-xs font-semibold text-gray-900 line-clamp-1 leading-tight">{name}</h3>
+        <div className="flex items-center justify-between mt-1">
+          <div className="flex items-baseline gap-1">
+            <span className="text-[13px] font-black text-gray-900">€{product.price.toFixed(2)}</span>
             {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-xs text-gray-400 line-through">€{product.originalPrice.toFixed(2)}</span>
+              <span className="text-[10px] text-gray-400 line-through">€{product.originalPrice.toFixed(2)}</span>
             )}
           </div>
           {product.rating && (
             <div className="flex items-center gap-0.5">
-              <StarIcon className="w-3 h-3 text-amber-400" filled />
-              <span className="text-[11px] text-gray-500 font-semibold">{product.rating}</span>
+              <StarIcon className="w-2.5 h-2.5 text-amber-400" filled />
+              <span className="text-[10px] text-gray-500 font-bold">{product.rating}</span>
             </div>
           )}
         </div>

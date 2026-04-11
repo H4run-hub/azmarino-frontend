@@ -4,23 +4,14 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'rea
 import { useSearchParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
+import { useLang } from '../../context/LanguageContext';
+import { SearchIcon } from '../../components/Icons';
 import type { Product } from '../../lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
-const CATEGORIES = [
-  { id: '', label: 'All' },
-  { id: 'women-clothing', label: 'Women' },
-  { id: 'men-clothing', label: 'Men' },
-  { id: 'kids-clothing', label: 'Kids' },
-  { id: 'electronics', label: 'Electronics' },
-  { id: 'shoes', label: 'Shoes' },
-  { id: 'accessories', label: 'Accessories' },
-  { id: 'beauty', label: 'Beauty' },
-  { id: 'bags', label: 'Bags' },
-];
-
 function ProductsContent() {
+  const { t } = useLang();
   const searchParams = useSearchParams();
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -36,18 +27,28 @@ function ProductsContent() {
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
 
+  const CATEGORIES = [
+    { id: '', label: 'All' },
+    { id: 'women-clothing', label: t('categories.women') },
+    { id: 'men-clothing', label: t('categories.men') },
+    { id: 'shoes', label: t('categories.shoes') },
+    { id: 'electronics', label: t('categories.electronics') },
+    { id: 'accessories', label: t('categories.accessories') },
+    { id: 'beauty', label: t('categories.beauty') },
+  ];
+
   useEffect(() => {
     setSearch(initialSearch);
     setCategory(initialCategory);
   }, [initialCategory, initialSearch]);
 
   const activeLabel = useMemo(() => {
-    if (featured) return 'Featured selection';
-    if (newArrival) return 'New arrivals';
-    if (category) return `Category: ${category.replace(/-/g, ' ')}`;
-    if (search) return `Search: "${search}"`;
-    return 'All products';
-  }, [category, featured, newArrival, search]);
+    if (featured) return 'Featured Collection';
+    if (newArrival) return t('newArrivals');
+    if (category) return category.replace(/-/g, ' ').toUpperCase();
+    if (search) return `"${search}"`;
+    return 'All Collection';
+  }, [category, featured, newArrival, search, t]);
 
   const fetchProducts = useCallback(async (reset = false, nextPage = 1) => {
     setLoading(true);
@@ -85,7 +86,7 @@ function ProductsContent() {
           fetchProducts(false, page + 1);
         }
       },
-      { threshold: 0.2 }
+      { threshold: 0.1 }
     );
 
     if (loaderRef.current) observer.observe(loaderRef.current);
@@ -93,87 +94,77 @@ function ProductsContent() {
   }, [fetchProducts, hasMore, loading, page]);
 
   return (
-    <main className="section-shell pb-16">
-      <section className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
-        <p className="eyebrow">Catalogue</p>
-        <div className="mt-4 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-          <div className="max-w-2xl">
-            <h1 className="display-title text-5xl text-[var(--ink-strong)] md:text-6xl">
-              Discover the full Azmarino product edit.
-            </h1>
-            <p className="soft-copy mt-4 text-base">
-              Search by taste, browse by category, and explore a cleaner global marketplace for fashion, beauty, and technology.
-            </p>
+    <main className="section-container py-12">
+      
+      {/* Header & Filters */}
+      <section className="mb-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-12 border-b border-gray-100 pb-8">
+          <div>
+            <p className="label-caps mb-2 text-gray-400">{t('shop')}</p>
+            <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">{activeLabel}</h1>
           </div>
-
-          <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/68 px-5 py-4 text-sm text-[var(--muted)]">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[var(--accent)]">Active filter</p>
-            <p className="mt-2 font-semibold text-[var(--ink-strong)]">{activeLabel}</p>
+          
+          {/* Internal Search */}
+          <div className="w-full md:w-80">
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input 
+                type="text" 
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={t('search')}
+                className="input-base pl-10 h-12"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="mt-8 grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-          <label className="block">
-            <span className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted)]">Search</span>
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search by product, material, or category"
-              className="w-full rounded-full border border-[var(--line)] bg-white px-5 py-4 text-sm text-[var(--ink-strong)] outline-none transition focus:border-[var(--accent)]"
-            />
-          </label>
-
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((item) => (
-              <button
-                key={item.id || 'all'}
-                onClick={() => setCategory(item.id)}
-                className={`rounded-full px-4 py-3 text-xs font-extrabold uppercase tracking-[0.2em] transition ${
-                  category === item.id
-                    ? 'bg-[var(--ink-strong)] text-white'
-                    : 'border border-[var(--line)] bg-white/66 text-[var(--ink)] hover:border-[rgba(158,36,52,0.25)]'
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+        {/* Categories Bar */}
+        <div className="flex flex-wrap gap-2 scrollbar-hide overflow-x-auto pb-2">
+          {CATEGORIES.map((item) => (
+            <button
+              key={item.id || 'all'}
+              onClick={() => setCategory(item.id)}
+              className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest border transition-all rounded-full ${
+                category === item.id
+                  ? 'bg-black text-white border-black'
+                  : 'bg-white text-black border-gray-200 hover:border-black'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       </section>
 
-      <section className="mt-10">
+      {/* Grid */}
+      <section>
         {loading && products.length === 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div key={index} className="surface-solid h-[26rem] animate-pulse rounded-[1.7rem]" />
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] bg-gray-100 rounded-2xl animate-pulse" />
+            ))}
+          </div>
+        ) : products.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-x-6 gap-y-12">
+            {products.map((product) => (
+              <ProductCard key={product._id} product={product} />
             ))}
           </div>
         ) : (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {products.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
-            </div>
-
-            {!products.length && (
-              <div className="surface-solid mt-6 rounded-[1.8rem] px-6 py-14 text-center">
-                <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--muted)]">No results</p>
-                <p className="mx-auto mt-4 max-w-xl text-base text-[var(--muted)]">
-                  Try another search term or remove a category filter to widen the catalogue.
-                </p>
-              </div>
-            )}
-          </>
+          <div className="py-40 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-300 italic mb-4">No pieces matching your search</p>
+            <button onClick={() => {setSearch(''); setCategory('');}} className="btn-black inline-flex">Clear Filters</button>
+          </div>
         )}
 
-        <div ref={loaderRef} className="flex justify-center py-10">
-          {loading && products.length > 0 ? (
-            <div className="h-10 w-10 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-          ) : !hasMore && products.length > 0 ? (
-            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--muted)]">No more products in this view.</p>
-          ) : null}
+        <div ref={loaderRef} className="py-20 flex justify-center">
+          {loading && products.length > 0 && (
+            <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
+          )}
+          {!hasMore && products.length > 0 && (
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-300 italic">EndOfCollection</p>
+          )}
         </div>
       </section>
     </main>
@@ -182,9 +173,9 @@ function ProductsContent() {
 
 export default function ProductsPage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <Suspense fallback={<main className="section-shell py-16" />}>
+      <Suspense fallback={<div className="section-container py-20 flex justify-center"><div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" /></div>}>
         <ProductsContent />
       </Suspense>
     </div>

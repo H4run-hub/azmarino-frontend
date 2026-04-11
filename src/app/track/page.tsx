@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
+import { useLang } from '../../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
@@ -29,11 +30,10 @@ interface TrackedOrder {
   items?: OrderItem[];
 }
 
-const formatPrice = (value: number) => `EUR ${value.toFixed(2)}`;
-
 const timeline = ['pending', 'processing', 'shipped', 'delivered'];
 
 function TrackOrderContent() {
+  const { t } = useLang();
   const searchParams = useSearchParams();
   const [orderNumber, setOrderNumber] = useState('');
   const [email, setEmail] = useState('');
@@ -60,9 +60,7 @@ function TrackOrderContent() {
   }, [searchParams]);
 
   const currentStep = useMemo(() => {
-    if (!order) {
-      return -1;
-    }
+    if (!order) return -1;
     const index = timeline.indexOf(order.status);
     return index >= 0 ? index : 1;
   }, [order]);
@@ -91,167 +89,120 @@ function TrackOrderContent() {
   };
 
   return (
-    <main className="section-shell pb-16">
-      <section className="grid gap-8 xl:grid-cols-[minmax(0,1.05fr)_0.95fr]">
-        <div className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
-          <p className="eyebrow">Track delivery</p>
-          <h1 className="display-title mt-4 text-5xl text-[var(--ink-strong)] md:text-6xl">Follow your order from confirmation to doorstep.</h1>
-          <p className="soft-copy mt-4 max-w-2xl text-base">
-            Enter your order number and the email used at checkout to view the latest status, tracking details, and item summary.
-          </p>
+    <main className="section-container py-12">
+      <header className="mb-12 border-b border-gray-100 pb-8">
+        <p className="label-caps mb-2 text-gray-400">{t('track')}</p>
+        <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">Logistics Tracking</h1>
+      </header>
 
-          <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
-            <label className="block">
-              <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Order number</span>
+      <div className="grid lg:grid-cols-[1fr_400px] gap-12 items-start">
+        
+        {/* Track Form */}
+        <div className="space-y-12">
+          <form onSubmit={handleSubmit} className="p-8 border border-gray-100 rounded-3xl bg-white shadow-sm space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Order Number</label>
               <input
                 required
                 value={orderNumber}
-                onChange={(event) => setOrderNumber(event.target.value)}
-                placeholder="AZ-123456-ABCD"
-                className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                onChange={e => setOrderNumber(e.target.value)}
+                placeholder="AZ-XXXXXX"
+                className="input-base"
               />
-            </label>
-
-            <label className="block">
-              <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Email</span>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Email Address</label>
               <input
                 required
                 type="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                className="input-base"
               />
-            </label>
-
-            {error ? (
-              <div className="rounded-[1.3rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
-                {error}
-              </div>
-            ) : null}
-
-            <button type="submit" disabled={loading} className="button-primary mt-2 justify-center">
-              {loading ? 'Checking status...' : 'Track order'}
+            </div>
+            {error && <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest text-center">{error}</p>}
+            <button type="submit" disabled={loading} className="btn-black w-full h-14">
+              {loading ? 'Locating...' : 'Search Order'}
             </button>
           </form>
+
+          {/* Result */}
+          {order && (
+            <div className="p-8 border border-gray-100 rounded-3xl bg-gray-50/50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex justify-between items-start mb-10 pb-6 border-b border-gray-200">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Status</p>
+                  <h3 className="text-2xl font-black uppercase tracking-tight text-black">{order.status}</h3>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Created</p>
+                  <p className="text-sm font-bold text-black">{new Date(order.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="mb-12">
+                <div className="flex justify-between mb-4">
+                  {timeline.map((step, i) => (
+                    <div key={step} className="flex flex-col items-center gap-2">
+                      <div className={`w-3 h-3 rounded-full border-2 ${i <= currentStep ? 'bg-black border-black' : 'bg-white border-gray-200'}`} />
+                      <span className={`text-[8px] font-black uppercase tracking-widest ${i <= currentStep ? 'text-black' : 'text-gray-300'}`}>{step}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="relative h-1 bg-gray-100 rounded-full overflow-hidden">
+                  <div 
+                    className="absolute inset-y-0 left-0 bg-black transition-all duration-1000" 
+                    style={{ width: `${(currentStep / (timeline.length - 1)) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-8">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Tracking ID</p>
+                  <p className="text-xs font-black text-black">{order.trackingNumber || 'Pending Assignment'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Value</p>
+                  <p className="text-xs font-black text-black">€{order.total.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
-        <aside className="surface-solid rounded-[2rem] p-6 md:p-8">
-          <p className="eyebrow">What you will see</p>
-          <div className="mt-6 grid gap-4">
-            <div className="metric-card">
-              <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--muted)]">Live status</p>
-              <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">Confirmation, fulfilment, shipment, and final delivery updates.</p>
-            </div>
-            <div className="metric-card">
-              <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--muted)]">Tracking details</p>
-              <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">Carrier reference, estimated arrival, and purchase summary.</p>
-            </div>
-            <div className="rounded-[1.6rem] border border-[rgba(176,134,74,0.3)] bg-[rgba(176,134,74,0.1)] p-5">
-              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[var(--gold)]">Tip</p>
-              <p className="mt-3 text-sm leading-7 text-[var(--ink)]">
-                Sign in before placing your next order and we will keep the email field ready for faster tracking.
-              </p>
+        {/* Sidebar Info */}
+        <aside className="space-y-6">
+          <div className="p-8 border border-gray-100 rounded-3xl bg-black text-white">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] mb-6">Tracking Support</h2>
+            <p className="text-xs text-gray-400 font-medium leading-relaxed mb-8">
+              Orders are typically processed within 48 hours. Once shipped, you will receive an email with your official carrier tracking number.
+            </p>
+            <div className="space-y-4">
+               <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Real-time status updates</span>
+               </div>
+               <div className="flex items-center gap-3">
+                  <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Full item breakdown</span>
+               </div>
             </div>
           </div>
         </aside>
-      </section>
 
-      {order ? (
-        <section className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_21rem]">
-          <article className="surface-solid rounded-[2rem] p-6 md:p-8">
-            <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-6 md:flex-row md:items-start md:justify-between">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[var(--accent)]">Order {order.orderNumber}</p>
-                <h2 className="mt-3 text-3xl font-black text-[var(--ink-strong)]">Status: {order.status}</h2>
-                <p className="mt-3 text-sm text-[var(--muted)]">
-                  Placed on {new Date(order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                </p>
-              </div>
-
-              <div className="rounded-[1.5rem] border border-[var(--line)] bg-[rgba(255,255,255,0.72)] px-5 py-4">
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Payment</p>
-                <p className="mt-2 text-base font-bold capitalize text-[var(--ink-strong)]">{order.paymentStatus || 'pending'}</p>
-              </div>
-            </div>
-
-            <div className="mt-8 grid gap-4 md:grid-cols-4">
-              {timeline.map((step, index) => {
-                const active = currentStep >= index;
-                return (
-                  <div
-                    key={step}
-                    className={`rounded-[1.5rem] border px-4 py-5 ${
-                      active
-                        ? 'border-[rgba(158,36,52,0.22)] bg-[var(--accent-soft)]'
-                        : 'border-[var(--line)] bg-white'
-                    }`}
-                  >
-                    <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[var(--muted)]">Step {index + 1}</p>
-                    <p className="mt-3 text-sm font-black capitalize text-[var(--ink-strong)]">{step}</p>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-8 grid gap-4 md:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/70 p-5">
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Tracking number</p>
-                <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">{order.trackingNumber || 'Assigned once shipped'}</p>
-              </div>
-              <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/70 p-5">
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Estimated delivery</p>
-                <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">
-                  {order.estimatedDelivery
-                    ? new Date(order.estimatedDelivery).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
-                    : 'We will add this once the carrier confirms dispatch'}
-                </p>
-              </div>
-            </div>
-
-            {order.shippingAddress ? (
-              <div className="mt-6 rounded-[1.6rem] border border-[var(--line)] bg-white/60 p-5">
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Shipping destination</p>
-                <p className="mt-3 text-sm font-semibold text-[var(--ink-strong)]">{order.shippingAddress.fullName || 'Recipient'}</p>
-                <p className="mt-1 text-sm text-[var(--muted)]">
-                  {[order.shippingAddress.city, order.shippingAddress.country].filter(Boolean).join(', ')}
-                </p>
-              </div>
-            ) : null}
-          </article>
-
-          <aside className="surface-panel h-fit rounded-[2rem] p-6 xl:sticky xl:top-28">
-            <p className="eyebrow">Purchase summary</p>
-            <div className="mt-5 space-y-4">
-              {order.items?.map((item, index) => (
-                <div key={`${item.name}-${index}`} className="flex items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--ink-strong)]">{item.name}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Qty {item.quantity}</p>
-                  </div>
-                  <span className="text-sm font-bold text-[var(--ink-strong)]">{formatPrice(item.price * item.quantity)}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-5 border-t border-[var(--line)] pt-5">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Order total</span>
-                <span className="text-xl font-extrabold text-[var(--ink-strong)]">{formatPrice(order.total || 0)}</span>
-              </div>
-            </div>
-          </aside>
-        </section>
-      ) : null}
+      </div>
     </main>
   );
 }
 
 export default function TrackOrderPage() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <Suspense fallback={<main className="section-shell py-16" />}>
+      <Suspense fallback={<div className="section-container py-40 flex justify-center"><div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" /></div>}>
         <TrackOrderContent />
       </Suspense>
     </div>

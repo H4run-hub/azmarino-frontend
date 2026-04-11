@@ -1,31 +1,31 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LanguageProvider } from "../context/LanguageContext";
+import SaraChat from "../components/SaraChat";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.azmarino.online"),
   applicationName: "Azmarino",
   title: {
-    default: "Azmarino | Premium Global Shopping for the Eritrean Diaspora",
+    default: "Azmarino | Premium Global E-commerce",
     template: "%s | Azmarino",
   },
   description:
-    "Azmarino is a premium global shopping experience built for the Eritrean diaspora, with secure payments, curated products, and delivery across Europe and beyond.",
+    "Discover curated global fashion, beauty, and technology with secure checkout and worldwide delivery.",
   keywords: [
     "Azmarino",
-    "Eritrean diaspora shopping",
     "global ecommerce",
     "premium marketplace",
-    "Tigrinya shopping",
-    "diaspora marketplace",
+    "luxury fashion",
+    "tech accessories",
   ],
   alternates: {
     canonical: "/",
   },
   openGraph: {
-    title: "Azmarino | Premium Global Shopping for the Eritrean Diaspora",
+    title: "Azmarino | Premium Global E-commerce",
     description:
-      "Discover curated fashion, beauty, and technology with secure checkout, multilingual support, and trusted delivery across Europe and beyond.",
+      "Curated global collection of fashion, beauty, and technology with secure worldwide shipping.",
     url: "https://www.azmarino.online",
     siteName: "Azmarino",
     images: [
@@ -41,9 +41,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Azmarino | Premium Global Shopping for the Eritrean Diaspora",
+    title: "Azmarino | Premium Global E-commerce",
     description:
-      "A calmer, premium online marketplace for curated products, secure payments, and trusted delivery.",
+      "Global collection of curated products with secure payments and trusted delivery.",
     images: ["/logo.jpg"],
   },
   icons: {
@@ -58,9 +58,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col antialiased site-bg text-[var(--ink-strong)]">
+      <body className="min-h-full flex flex-col antialiased">
         <LanguageProvider>
           {children}
+          <SaraChat />
         </LanguageProvider>
       </body>
     </html>

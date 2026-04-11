@@ -10,122 +10,82 @@ interface Props {
   product: Product;
 }
 
-interface StoredCartItem {
-  id: string;
-  product: Product;
-  quantity: number;
-  selected?: boolean;
-}
-
-const formatPrice = (price: number) => `EUR ${price.toFixed(2)}`;
+const formatPrice = (price: number) => `€${price.toFixed(2)}`;
 
 export default function ProductCard({ product }: Props) {
-  const [imageIndex, setImageIndex] = useState(0);
-  const [added, setAdded] = useState(false);
+  const [hover, setHover] = useState(false);
 
   const images = [product.image, ...(product.images || [])].filter(Boolean) as string[];
-  const displayName = product.name;
   const discount = product.discount || (
     product.originalPrice && product.originalPrice > product.price
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0
   );
 
-  const addToCart = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]') as StoredCartItem[];
-    const existing = cart.find((item) => item.id === product._id);
-
-    if (existing) existing.quantity += 1;
-    else cart.push({ id: product._id, product, quantity: 1, selected: true });
-
-    localStorage.setItem('azmarino_cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cart-updated'));
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1400);
-  };
-
   return (
     <Link
       href={`/products/${product._id}`}
-      onMouseEnter={() => images.length > 1 && setImageIndex(1)}
-      onMouseLeave={() => setImageIndex(0)}
-      className="group block"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="group"
     >
-      <article className="surface-solid overflow-hidden rounded-[1.65rem] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(43,40,36,0.11)]">
-        <div className="relative aspect-[4/5] overflow-hidden bg-[linear-gradient(180deg,#f6efe5,#ebe1d1)]">
-          <Image
-            src={images[imageIndex] || '/logo.jpg'}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="object-cover transition duration-500 group-hover:scale-[1.04]"
-          />
-
-          <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-            <div className="flex flex-wrap gap-2">
-              {discount > 0 && (
-                <span className="rounded-full bg-[var(--ink-strong)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.24em] text-white">
-                  Save {discount}%
-                </span>
-              )}
-              {product.newArrival && (
-                <span className="rounded-full bg-white/82 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.24em] text-[var(--accent)]">
-                  New
-                </span>
-              )}
-            </div>
-
-            {product.rating ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/84 px-2.5 py-1 text-[10px] font-bold text-[var(--ink-strong)]">
-                <StarIcon className="h-3 w-3 text-[var(--gold)]" filled />
-                {product.rating.toFixed(1)}
-              </span>
-            ) : null}
-          </div>
-
-          <div className="absolute inset-x-0 bottom-0 translate-y-full p-3 transition duration-300 group-hover:translate-y-0">
-            <button
-              onClick={addToCart}
-              className={`w-full rounded-full px-4 py-3 text-xs font-extrabold uppercase tracking-[0.24em] transition ${
-                added ? 'bg-[var(--gold)] text-[var(--ink-strong)]' : 'bg-[var(--ink-strong)] text-white hover:bg-[var(--accent)]'
-              }`}
-            >
-              {added ? 'Added to cart' : 'Quick add'}
-            </button>
-          </div>
+      <div className="relative aspect-[3/4] overflow-hidden bg-gray-50 border border-gray-100 rounded-xl">
+        <Image
+          src={(hover && images[1]) ? images[1] : images[0] || '/logo.jpg'}
+          alt={product.name}
+          fill
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+          className="object-cover transition-all duration-700 group-hover:scale-105"
+        />
+        
+        {/* Badges */}
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {discount > 0 && (
+            <span className="bg-black text-white text-[8px] font-black uppercase tracking-widest px-2 py-1">
+              -{discount}%
+            </span>
+          )}
+          {product.newArrival && (
+            <span className="bg-white text-black text-[8px] font-black uppercase tracking-widest px-2 py-1 border border-gray-100">
+              New
+            </span>
+          )}
         </div>
 
-        <div className="space-y-3 px-4 pb-5 pt-4">
-          <div className="space-y-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--muted)]">
-              {(product.category || 'collection').replace(/-/g, ' ')}
-            </p>
-            <h3 className="text-sm font-semibold leading-6 text-[var(--ink-strong)]">
-              {displayName}
-            </h3>
-          </div>
-
-          <div className="flex items-end justify-between gap-2">
-            <div className="flex flex-col">
-              <span className="text-base font-extrabold text-[var(--ink-strong)]">{formatPrice(product.price)}</span>
-              {product.originalPrice && product.originalPrice > product.price ? (
-                <span className="text-xs font-medium text-[var(--muted)] line-through">
-                  {formatPrice(product.originalPrice)}
-                </span>
-              ) : null}
-            </div>
-
-            {product.stock !== undefined ? (
-              <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
-                {product.stock > 0 ? 'In stock' : 'Low stock'}
-              </span>
-            ) : null}
-          </div>
+        {/* Quick View / Hover Action */}
+        <div className={`absolute inset-x-0 bottom-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300`}>
+           <div className="btn-black w-full text-[8px] h-10 py-0">
+              View Details
+           </div>
         </div>
-      </article>
+      </div>
+
+      <div className="mt-3 space-y-1 px-1">
+        <div className="flex justify-between items-start gap-2">
+          <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight line-clamp-1 flex-1">
+            {product.name}
+          </h3>
+          {product.rating && (
+            <div className="flex items-center gap-0.5">
+              <StarIcon className="w-2.5 h-2.5 text-amber-400" filled />
+              <span className="text-[9px] font-black text-gray-400">{product.rating.toFixed(1)}</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-baseline gap-2">
+          <span className="text-xs font-black text-black">{formatPrice(product.price)}</span>
+          {product.originalPrice && product.originalPrice > product.price && (
+            <span className="text-[10px] text-gray-400 line-through font-bold">
+              {formatPrice(product.originalPrice)}
+            </span>
+          )}
+        </div>
+        
+        <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">
+          {(product.category || 'Collection').replace(/-/g, ' ')}
+        </p>
+      </div>
     </Link>
   );
 }

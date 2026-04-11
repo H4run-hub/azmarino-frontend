@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '../../components/Navbar';
+import { useLang } from '../../context/LanguageContext';
 import type { CartItem } from '../../lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
@@ -21,10 +22,9 @@ interface CheckoutCartItem extends CartItem {
   selected?: boolean;
 }
 
-const formatPrice = (value: number) => `EUR ${value.toFixed(2)}`;
-
 export default function CheckoutPage() {
   const router = useRouter();
+  const { t } = useLang();
   const [items, setItems] = useState<CartItem[]>([]);
   const [userEmail, setUserEmail] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
@@ -140,126 +140,136 @@ export default function CheckoutPage() {
 
   if (!items.length) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-white">
         <Navbar />
-        <main className="section-shell py-16">
-          <div className="surface-solid rounded-[2rem] px-6 py-16 text-center">
-            <div className="mx-auto h-10 w-10 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-          </div>
-        </main>
+        <div className="py-40 flex justify-center">
+           <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white text-black">
       <Navbar />
-      <main className="section-shell pb-16">
-        <section className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
-          <p className="eyebrow">Checkout</p>
-          <h1 className="display-title mt-4 text-5xl text-[var(--ink-strong)] md:text-6xl">Confirm your details and continue to Stripe.</h1>
-          <p className="soft-copy mt-4 max-w-2xl text-base">
-            Review your address, keep your order summary visible, and complete payment through a secure hosted checkout.
-          </p>
-        </section>
+      
+      <main className="section-container py-12">
+        <header className="mb-12 border-b border-gray-100 pb-8">
+          <p className="label-caps mb-2 text-gray-400">Secure Checkout</p>
+          <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">Final Confirmation</h1>
+        </header>
 
-        <section className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="surface-solid rounded-[2rem] p-6 md:p-8">
-              <p className="eyebrow">Shipping</p>
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <label className="block md:col-span-2">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Full name</span>
-                  <input value={address.fullName} onChange={(event) => setAddress((current) => ({ ...current, fullName: event.target.value }))} className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]" required />
-                </label>
-                <label className="block md:col-span-2">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Street address</span>
-                  <input value={address.address} onChange={(event) => setAddress((current) => ({ ...current, address: event.target.value }))} className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]" required />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">City</span>
-                  <input value={address.city} onChange={(event) => setAddress((current) => ({ ...current, city: event.target.value }))} className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]" required />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Postal code</span>
-                  <input value={address.postalCode} onChange={(event) => setAddress((current) => ({ ...current, postalCode: event.target.value }))} className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]" />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Country</span>
-                  <input value={address.country} onChange={(event) => setAddress((current) => ({ ...current, country: event.target.value }))} className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]" required />
-                </label>
-                <label className="block">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Phone</span>
-                  <input value={address.phone} onChange={(event) => setAddress((current) => ({ ...current, phone: event.target.value }))} className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]" />
-                </label>
-                <label className="block md:col-span-2">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Notes</span>
-                  <textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={4} className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]" placeholder="Optional delivery instructions" />
-                </label>
+        <div className="grid lg:grid-cols-[1fr_380px] gap-12 items-start">
+          
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-12">
+            <div className="space-y-8">
+              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-black flex items-center gap-4">
+                <span>01 Shipping Details</span>
+                <div className="h-px flex-1 bg-gray-100" />
+              </h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Full Name</label>
+                  <input value={address.fullName} onChange={e => setAddress({...address, fullName: e.target.value})} className="input-base" required />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Street Address</label>
+                  <input value={address.address} onChange={e => setAddress({...address, address: e.target.value})} className="input-base" required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">City</label>
+                  <input value={address.city} onChange={e => setAddress({...address, city: e.target.value})} className="input-base" required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Postal Code</label>
+                  <input value={address.postalCode} onChange={e => setAddress({...address, postalCode: e.target.value})} className="input-base" required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Country</label>
+                  <input value={address.country} onChange={e => setAddress({...address, country: e.target.value})} className="input-base" required />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Phone</label>
+                  <input value={address.phone} onChange={e => setAddress({...address, phone: e.target.value})} className="input-base" required />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Order Notes (Optional)</label>
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="input-base py-4 resize-none" placeholder="e.g. Leave with neighbor..." />
+                </div>
               </div>
             </div>
 
-            <div className="surface-solid rounded-[2rem] p-6 md:p-8">
-              <p className="eyebrow">Payment</p>
-              <div className="mt-5 rounded-[1.5rem] border border-[rgba(158,36,52,0.16)] bg-[var(--accent-soft)] p-5">
-                <p className="text-sm font-bold text-[var(--ink-strong)]">Hosted Stripe checkout</p>
-                <p className="mt-2 text-sm text-[var(--muted)]">
-                  You will be redirected to a secure Stripe page to complete payment and return to Azmarino once the order is confirmed.
-                </p>
+            <div className="space-y-8">
+              <h2 className="text-xs font-black uppercase tracking-[0.2em] text-black flex items-center gap-4">
+                <span>02 Payment Method</span>
+                <div className="h-px flex-1 bg-gray-100" />
+              </h2>
+              <div className="p-6 border border-gray-100 rounded-2xl bg-gray-50/50 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                   <div className="w-10 h-10 bg-white border border-gray-200 rounded-lg flex items-center justify-center p-2">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="w-full h-full object-contain" />
+                   </div>
+                   <div>
+                      <p className="text-xs font-black uppercase tracking-widest">Secure Payment Gateway</p>
+                      <p className="text-[10px] font-medium text-gray-400 uppercase">You will be redirected to Stripe</p>
+                   </div>
+                </div>
+                <div className="w-4 h-4 rounded-full border-4 border-black bg-white" />
               </div>
             </div>
 
-            {error ? (
-              <div className="rounded-[1.3rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
+            {error && (
+              <div className="p-4 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold uppercase tracking-widest rounded-xl text-center">
                 {error}
               </div>
-            ) : null}
+            )}
 
-            <button type="submit" disabled={loading} className="button-primary w-full justify-center">
-              {loading ? 'Preparing payment...' : `Continue to payment - ${formatPrice(total)}`}
+            <button type="submit" disabled={loading} className="btn-black w-full h-16 text-xs">
+              {loading ? 'Processing...' : `Pay Now — €${total.toFixed(2)}`}
             </button>
           </form>
 
-          <aside className="surface-panel h-fit rounded-[2rem] p-6 xl:sticky xl:top-28">
-            <p className="eyebrow">Order summary</p>
-            <div className="mt-5 space-y-4">
-              {items.map((item) => (
-                <div key={item.id} className="flex items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--ink-strong)]">{item.product.name}</p>
-                    <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--muted)]">
-                      Qty {item.quantity}
-                      {item.selectedSize ? ` | Size ${item.selectedSize}` : ''}
-                      {item.selectedColor ? ` | Color ${item.selectedColor}` : ''}
-                    </p>
+          {/* Sidebar Summary */}
+          <aside className="border border-gray-100 rounded-2xl bg-gray-50/50 p-8 sticky top-32">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-black mb-8 border-b border-gray-200 pb-4">Selections</h2>
+            <div className="space-y-6 mb-8">
+              {items.map(item => (
+                <div key={item.id} className="flex gap-4">
+                  <div className="relative w-12 h-16 overflow-hidden rounded-lg border border-gray-200 bg-white">
+                    <img src={item.product.image} alt="" className="w-full h-full object-cover" />
                   </div>
-                  <span className="text-sm font-bold text-[var(--ink-strong)]">{formatPrice(item.product.price * item.quantity)}</span>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <p className="text-[10px] font-black uppercase tracking-tight text-black line-clamp-1">{item.product.name}</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase">Qty {item.quantity} · {item.selectedSize || 'OS'}</p>
+                  </div>
+                  <p className="text-[10px] font-black self-center">€{(item.product.price * item.quantity).toFixed(2)}</p>
                 </div>
               ))}
             </div>
 
-            <div className="mt-5 space-y-3 text-sm">
-              <div className="flex items-center justify-between text-[var(--muted)]">
+            <div className="space-y-4 pt-6 border-t border-gray-200">
+              <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-gray-400">
                 <span>Subtotal</span>
-                <span className="font-semibold text-[var(--ink-strong)]">{formatPrice(subtotal)}</span>
+                <span className="text-black">€{subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between text-[var(--muted)]">
+              <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-gray-400">
                 <span>Shipping</span>
-                <span className="font-semibold text-[var(--ink-strong)]">{shippingCost === 0 ? 'Included' : formatPrice(shippingCost)}</span>
+                <span className="text-black">{shippingCost === 0 ? 'Complimentary' : `€${shippingCost.toFixed(2)}`}</span>
               </div>
-              <div className="border-t border-[var(--line)] pt-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Total</span>
-                  <span className="text-xl font-extrabold text-[var(--ink-strong)]">{formatPrice(total)}</span>
-                </div>
+              <div className="pt-4 border-t border-gray-200 flex justify-between items-baseline">
+                <span className="text-xs font-black uppercase tracking-widest text-black">Total</span>
+                <span className="text-2xl font-black text-black tracking-tighter">€{total.toFixed(2)}</span>
               </div>
             </div>
 
-            <Link href="/cart" className="button-secondary mt-6 w-full justify-center">
-              Back to cart
+            <Link href="/cart" className="btn-outline w-full h-12 text-[9px] border-transparent bg-transparent hover:bg-gray-100 mt-6">
+              Return to Cart
             </Link>
           </aside>
-        </section>
+
+        </div>
       </main>
     </div>
   );

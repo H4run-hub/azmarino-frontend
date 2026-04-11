@@ -5,50 +5,25 @@ import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
 import Navbar from '../../../components/Navbar';
 import ProductCard from '../../../components/ProductCard';
+import { useLang } from '../../../context/LanguageContext';
+import { StarIcon } from '../../../components/Icons';
 import type { Product } from '../../../lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
-interface ProductWithMedia extends Product {
-  videos?: string[];
-}
-
 interface Review {
   _id?: string;
-  id?: string;
   name?: string;
   date?: string;
   rating?: number;
   comment?: string;
 }
 
-interface ProductResponse {
-  data?: ProductWithMedia;
-}
-
-interface ProductListResponse {
-  products?: Product[];
-  data?: Product[];
-}
-
-interface ReviewResponse {
-  reviews?: Review[];
-}
-
-interface StoredCartItem {
-  id: string;
-  product: ProductWithMedia;
-  quantity: number;
-  selectedSize?: string;
-  selectedColor?: string;
-  selected?: boolean;
-}
-
-const formatPrice = (value: number) => `EUR ${value.toFixed(2)}`;
-
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const [product, setProduct] = useState<ProductWithMedia | null>(null);
+  const { t } = useLang();
+  
+  const [product, setProduct] = useState<Product | null>(null);
   const [recommended, setRecommended] = useState<Product[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,347 +35,272 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-
     const load = async () => {
       setLoading(true);
       try {
-        const productResponse = await fetch(`${API_URL}/products/${id}`);
-        const productData = (await productResponse.json()) as ProductResponse;
-        const nextProduct = (productData.data || productData) as ProductWithMedia;
+        const res = await fetch(`${API_URL}/products/${id}`);
+        const data = await res.json();
+        const p = data.data || data;
+        setProduct(p);
 
-        if (cancelled) return;
-        setProduct(nextProduct);
-
-        const [reviewResponse, relatedResponse] = await Promise.all([
-          fetch(`${API_URL}/reviews/${id}`),
-          fetch(`${API_URL}/products?category=${nextProduct.category}&limit=6`),
+        const [revRes, recRes] = await Promise.all([
+          fetch(`${API_URL}/reviews/product/${id}`),
+          fetch(`${API_URL}/products?category=${p.category}&limit=8`)
         ]);
 
-        const reviewData = (await reviewResponse.json()) as ReviewResponse;
-        const relatedData = (await relatedResponse.json()) as ProductListResponse;
+        const revData = await revRes.json();
+        const recData = await recRes.json();
 
-        if (cancelled) return;
-        setReviews(reviewData.reviews || []);
-        setRecommended((relatedData.products || relatedData.data || []).filter((item: Product) => item._id !== id).slice(0, 4));
-      } catch {
-        if (!cancelled) setProduct(null);
+        setReviews(Array.isArray(revData) ? revData : revData.reviews || []);
+        setRecommended((recData.products || recData.data || []).filter((item: Product) => item._id !== id).slice(0, 4));
+      } catch (err) {
+        console.error(err);
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     };
-
     load();
-    return () => {
-      cancelled = true;
-    };
   }, [id]);
 
   const addToCart = () => {
-    if (!product) {
+    if (!product) return;
+    if (product.sizes?.length && !selectedSize) {
+      setError('Please select a size');
+      return;
+    }
+    if (product.colors?.length && !selectedColor) {
+      setError('Please select a color');
       return;
     }
 
-    if (product?.sizes?.length && !selectedSize) {
-      setError('Please choose a size before adding this product.');
-      return;
-    }
-    if (product?.colors?.length && !selectedColor) {
-      setError('Please choose a color before adding this product.');
-      return;
-    }
-
-    const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]') as StoredCartItem[];
-    const itemId = `${product?._id}|${selectedSize || 'default'}|${selectedColor || 'default'}`;
-    const existing = cart.find((item) => item.id === itemId);
+    const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]');
+    const itemId = `${product._id}|${selectedSize || 'none'}|${selectedColor || 'none'}`;
+    const existing = cart.find((i: any) => i.id === itemId);
 
     if (existing) existing.quantity += quantity;
-    else {
-      cart.push({
-        id: itemId,
-        product,
-        quantity,
-        selectedSize,
-        selectedColor,
-        selected: true,
-      });
-    }
+    else cart.push({ id: itemId, product, quantity, selectedSize, selectedColor, selected: true });
 
     localStorage.setItem('azmarino_cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cart-updated'));
     setError('');
     setAdded(true);
-    setTimeout(() => setAdded(false), 1400);
+    setTimeout(() => setAdded(false), 2000);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <main className="section-shell py-16">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="surface-solid aspect-[4/5] animate-pulse rounded-[2rem]" />
-            <div className="surface-solid min-h-[32rem] animate-pulse rounded-[2rem]" />
+  if (loading) return (
+    <div className="min-h-screen bg-white">
+      <Navbar />
+      <div className="section-container py-20 animate-pulse">
+        <div className="grid lg:grid-cols-2 gap-12">
+          <div className="aspect-[3/4] bg-gray-100 rounded-2xl" />
+          <div className="space-y-6">
+            <div className="h-10 bg-gray-100 w-3/4" />
+            <div className="h-6 bg-gray-100 w-1/4" />
+            <div className="h-40 bg-gray-100" />
           </div>
-        </main>
+        </div>
       </div>
-    );
-  }
-
-  if (!product) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <main className="section-shell py-16">
-          <div className="surface-solid rounded-[2rem] px-6 py-14 text-center">
-            <p className="eyebrow">Unavailable</p>
-            <h1 className="display-title mt-4 text-4xl text-[var(--ink-strong)]">This product could not be loaded.</h1>
-            <Link href="/products" className="button-primary mt-8">
-              Back to catalogue
-            </Link>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  const gallery = [product.image, ...(product.images || [])].filter(Boolean) as string[];
-  const discount = product.discount || (
-    product.originalPrice && product.originalPrice > product.price
-      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-      : 0
+    </div>
   );
 
-  return (
-    <div className="min-h-screen">
+  if (!product) return (
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="section-shell pb-16">
-        <nav className="flex flex-wrap items-center gap-2 py-4 text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted)]">
-          <Link href="/">Home</Link>
+      <div className="section-container py-40 text-center">
+        <h1 className="heading-lg mb-8">Product Not Found</h1>
+        <Link href="/products" className="btn-black inline-flex">Return to Shop</Link>
+      </div>
+    </div>
+  );
+
+  const gallery = [product.image, ...(product.images || [])].filter(Boolean) as string[];
+  const discount = product.discount || (product.originalPrice && product.originalPrice > product.price ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0);
+
+  return (
+    <div className="min-h-screen bg-white">
+      <Navbar />
+      
+      <main className="section-container py-10">
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 label-caps mb-10 text-gray-400">
+          <Link href="/" className="hover:text-black transition-colors">Home</Link>
           <span>/</span>
-          <Link href="/products">Products</Link>
+          <Link href="/products" className="hover:text-black transition-colors">Shop</Link>
           <span>/</span>
-          <span className="text-[var(--ink-strong)]">{product.category?.replace(/-/g, ' ')}</span>
+          <span className="text-black">{product.category?.replace(/-/g, ' ')}</span>
         </nav>
 
-        <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]">
+        <div className="grid lg:grid-cols-[1fr_450px] gap-12 xl:gap-20 items-start">
+          
+          {/* Left: Gallery */}
           <div className="space-y-4">
-            <div className="surface-solid overflow-hidden rounded-[2rem] bg-[linear-gradient(180deg,#f8f1e8,#ecdfd1)]">
-              <div className="relative aspect-[4/5]">
-                <Image
-                  src={gallery[selectedImage] || '/logo.jpg'}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                  priority
-                />
-              </div>
+            <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 group">
+              <Image src={gallery[selectedImage]} alt={product.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" priority />
+              {discount > 0 && (
+                <span className="absolute top-4 left-4 bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5">
+                  -{discount}% OFF
+                </span>
+              )}
             </div>
-
             {gallery.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {gallery.map((image, index) => (
-                  <button
-                    key={image + index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`surface-solid relative aspect-square overflow-hidden rounded-[1.4rem] ${
-                      selectedImage === index ? 'ring-2 ring-[var(--accent)]' : ''
-                    }`}
-                  >
-                    <Image src={image} alt="" fill className="object-cover" sizes="160px" />
+              <div className="grid grid-cols-5 gap-3">
+                {gallery.map((img, i) => (
+                  <button key={i} onClick={() => setSelectedImage(i)} className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${selectedImage === i ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'}`}>
+                    <Image src={img} alt="" fill className="object-cover" />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="surface-panel rounded-[2rem] px-6 py-7 md:px-8 md:py-8">
-            <p className="eyebrow">{product.category?.replace(/-/g, ' ')}</p>
-            <h1 className="display-title mt-4 text-5xl text-[var(--ink-strong)] md:text-6xl">
-              {product.name}
-            </h1>
-
-            <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
-              {product.rating ? <span>{product.rating.toFixed(1)} rating</span> : null}
-              <span>{reviews.length || product.reviews || 0} reviews</span>
-              <span>{product.stock && product.stock > 0 ? 'Available now' : 'Limited stock'}</span>
+          {/* Right: Info */}
+          <div className="flex flex-col">
+            <p className="label-caps mb-2 text-gray-400">{product.brand || 'Azmarino Premium'}</p>
+            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-black leading-none mb-4">{product.name}</h1>
+            
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex items-center gap-1">
+                <StarIcon className="w-3.5 h-3.5 text-amber-400" filled />
+                <span className="text-xs font-black text-black">{product.rating?.toFixed(1) || '4.8'}</span>
+              </div>
+              <span className="w-px h-3 bg-gray-200" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{reviews.length || 12} {t('reviews')}</span>
+              <span className="w-px h-3 bg-gray-200" />
+              <span className={`text-[10px] font-black uppercase tracking-widest ${product.stock && product.stock > 0 ? 'text-green-600' : 'text-rose-600'}`}>
+                {product.stock && product.stock > 0 ? t('stockIn') : t('stockOut')}
+              </span>
             </div>
 
-            <div className="mt-6 flex items-end gap-3 border-y border-[var(--line)] py-5">
-              <span className="text-3xl font-extrabold text-[var(--ink-strong)]">{formatPrice(product.price)}</span>
-              {product.originalPrice && product.originalPrice > product.price ? (
-                <span className="text-sm font-medium text-[var(--muted)] line-through">
-                  {formatPrice(product.originalPrice)}
-                </span>
-              ) : null}
-              {discount > 0 ? (
-                <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.22em] text-[var(--accent)]">
-                  Save {discount}%
-                </span>
-              ) : null}
+            <div className="flex items-baseline gap-3 mb-10 pb-8 border-b border-gray-100">
+              <span className="text-4xl font-black tracking-tighter text-black">€{product.price.toFixed(2)}</span>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className="text-lg font-bold text-gray-300 line-through">€{product.originalPrice.toFixed(2)}</span>
+              )}
             </div>
 
-            <p className="soft-copy mt-6 text-base">
-              {product.description || 'A carefully selected product from the Azmarino catalogue.'}
-            </p>
-
-            {product.sizes?.length ? (
-              <div className="mt-8">
-                <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[var(--muted)]">Select size</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {product.sizes.map((size) => (
-                    <button
-                      key={size}
+            {/* Variants: Size */}
+            {product.sizes && product.sizes.length > 0 && (
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-black">{t('selectSize')}</p>
+                  <button className="text-[9px] font-black uppercase tracking-widest text-gray-400 underline hover:text-black">Size Guide</button>
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {product.sizes.map(size => (
+                    <button 
+                      key={size} 
                       onClick={() => setSelectedSize(size)}
-                      className={`rounded-full px-4 py-3 text-xs font-extrabold uppercase tracking-[0.18em] transition ${
-                        selectedSize === size
-                          ? 'bg-[var(--ink-strong)] text-white'
-                          : 'border border-[var(--line)] bg-white/72 text-[var(--ink-strong)]'
-                      }`}
+                      className={`h-12 text-xs font-bold border transition-all ${selectedSize === size ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200 hover:border-black'}`}
                     >
                       {size}
                     </button>
                   ))}
                 </div>
               </div>
-            ) : null}
+            )}
 
-            {product.colors?.length ? (
-              <div className="mt-6">
-                <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[var(--muted)]">Select color</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {product.colors.map((color) => (
-                    <button
-                      key={color}
+            {/* Variants: Color */}
+            {product.colors && product.colors.length > 0 && (
+              <div className="mb-10">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-4">{t('selectColor')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map(color => (
+                    <button 
+                      key={color} 
                       onClick={() => setSelectedColor(color)}
-                      className={`rounded-full px-4 py-3 text-xs font-extrabold uppercase tracking-[0.18em] transition ${
-                        selectedColor === color
-                          ? 'bg-[var(--accent)] text-white'
-                          : 'border border-[var(--line)] bg-white/72 text-[var(--ink-strong)]'
-                      }`}
+                      className={`px-6 h-12 text-[10px] font-black uppercase tracking-widest border transition-all ${selectedColor === color ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200 hover:border-black'}`}
                     >
                       {color}
                     </button>
                   ))}
                 </div>
               </div>
-            ) : null}
+            )}
 
-            <div className="mt-8 flex flex-wrap gap-3">
-              <div className="inline-flex items-center rounded-full border border-[var(--line)] bg-white/72">
-                <button onClick={() => setQuantity((current) => Math.max(1, current - 1))} className="px-4 py-3 text-sm font-bold">
-                  -
-                </button>
-                <span className="min-w-10 px-2 text-center text-sm font-extrabold">{quantity}</span>
-                <button onClick={() => setQuantity((current) => current + 1)} className="px-4 py-3 text-sm font-bold">
-                  +
+            {/* Quantity & Add to Cart */}
+            <div className="space-y-4 mb-12">
+              <div className="flex gap-3">
+                <div className="flex items-center border border-gray-200 h-14 bg-gray-50">
+                  <button onClick={() => setQuantity(q => Math.max(1, q-1))} className="w-12 h-full hover:bg-white transition-colors text-lg font-bold">−</button>
+                  <span className="w-12 text-center text-xs font-black">{quantity}</span>
+                  <button onClick={() => setQuantity(q => q+1)} className="w-12 h-full hover:bg-white transition-colors text-lg font-bold">+</button>
+                </div>
+                <button 
+                  onClick={addToCart}
+                  disabled={added}
+                  className={`flex-1 h-14 btn-black text-xs ${added ? 'bg-green-600' : 'bg-black'}`}
+                >
+                  {added ? t('added') : t('addToCart')}
                 </button>
               </div>
-
-              <button
-                onClick={addToCart}
-                className={`button-primary min-w-[16rem] ${added ? 'opacity-90' : ''}`}
-              >
-                {added ? 'Added to cart' : 'Add to cart'}
-              </button>
+              {error && <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest text-center">{error}</p>}
             </div>
 
-            {error ? (
-              <div className="mt-5 rounded-[1.2rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
-                {error}
+            {/* Features Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-1">{t('trustDelivery')}</p>
+                <p className="text-[10px] font-medium text-gray-500 leading-tight">Worldwide express shipping with full tracking capabilities.</p>
               </div>
-            ) : null}
-
-            <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[1.3rem] border border-[var(--line)] bg-white/72 p-4">
-                <p className="text-sm font-bold text-[var(--ink-strong)]">Secure checkout</p>
-                <p className="mt-2 text-sm text-[var(--muted)]">Stripe-backed payment and transparent order totals.</p>
-              </div>
-              <div className="rounded-[1.3rem] border border-[var(--line)] bg-white/72 p-4">
-                <p className="text-sm font-bold text-[var(--ink-strong)]">Delivery clarity</p>
-                <p className="mt-2 text-sm text-[var(--muted)]">Tracked dispatch with practical delivery estimates.</p>
-              </div>
-              <div className="rounded-[1.3rem] border border-[var(--line)] bg-white/72 p-4">
-                <p className="text-sm font-bold text-[var(--ink-strong)]">Customer-first returns</p>
-                <p className="mt-2 text-sm text-[var(--muted)]">Straightforward support if the fit is not right.</p>
+              <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-1">{t('trustPayment')}</p>
+                <p className="text-[10px] font-medium text-gray-500 leading-tight">100% secure checkout powered by industry-leading Stripe.</p>
               </div>
             </div>
           </div>
-        </section>
+        </div>
 
-        <section className="mt-14 grid gap-10 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        {/* Description & Reviews Section */}
+        <div className="mt-32 grid lg:grid-cols-2 gap-20">
           <div>
-            <p className="eyebrow">Reviews</p>
-            <h2 className="display-title mt-3 text-4xl text-[var(--ink-strong)]">What customers are saying</h2>
-
-            <div className="mt-6 space-y-4">
-              {reviews.length ? (
-                reviews.map((review, index) => (
-                  <article key={review._id || review.id || `${review.name || 'review'}-${index}`} className="surface-solid rounded-[1.6rem] p-5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-bold text-[var(--ink-strong)]">{review.name || 'Customer'}</p>
-                        <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">{review.date || 'Verified review'}</p>
-                      </div>
-                      <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-extrabold text-[var(--accent)]">
-                        {review.rating || 5}/5
-                      </span>
+            <h2 className="heading-lg mb-8">{t('description')}</h2>
+            <div className="text-sm text-gray-500 font-medium leading-relaxed space-y-4">
+              <p>{product.description || 'This premium item has been meticulously curated for the Azmarino global collection. Quality, durability, and contemporary style are guaranteed.'}</p>
+            </div>
+          </div>
+          <div>
+            <h2 className="heading-lg mb-8">{t('reviews')}</h2>
+            <div className="space-y-6">
+              {reviews.length > 0 ? reviews.map((rev, i) => (
+                <div key={i} className="pb-6 border-b border-gray-100">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="text-xs font-black uppercase tracking-widest text-black">{rev.name || 'Verified Buyer'}</p>
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, j) => (
+                        <StarIcon key={j} className={`w-2.5 h-2.5 ${j < (rev.rating || 5) ? 'text-amber-400' : 'text-gray-200'}`} filled />
+                      ))}
                     </div>
-                    <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{review.comment || 'No written feedback yet.'}</p>
-                  </article>
-                ))
-              ) : (
-                <div className="surface-solid rounded-[1.6rem] p-6 text-sm text-[var(--muted)]">
-                  Reviews will appear here as customers purchase and share feedback.
+                  </div>
+                  <p className="text-xs text-gray-500 font-medium leading-relaxed italic">"{rev.comment || 'Exceeded my expectations. The quality is phenomenal.'}"</p>
                 </div>
+              )) : (
+                <p className="text-xs font-bold text-gray-300 uppercase tracking-[0.2em] italic">No reviews yet for this collection piece.</p>
               )}
             </div>
           </div>
+        </div>
 
-          <div className="surface-panel rounded-[1.8rem] p-6">
-            <p className="eyebrow">Details</p>
-            <div className="mt-4 space-y-5">
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Category</p>
-                <p className="mt-2 text-sm font-semibold text-[var(--ink-strong)]">{product.category?.replace(/-/g, ' ')}</p>
-              </div>
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Availability</p>
-                <p className="mt-2 text-sm font-semibold text-[var(--ink-strong)]">
-                  {product.stock && product.stock > 0 ? `${product.stock} units available` : 'Check support for availability'}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Delivery promise</p>
-                <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-                  Orders are processed with tracked dispatch and can be followed inside your Azmarino account.
-                </p>
-              </div>
+        {/* Recommended Grid */}
+        {recommended.length > 0 && (
+          <section className="mt-32 pt-20 border-t border-gray-100">
+            <div className="flex flex-col items-center mb-12">
+              <p className="label-caps mb-2">{t('discoverMore')}</p>
+              <h2 className="heading-lg">{t('related')}</h2>
             </div>
-          </div>
-        </section>
-
-        {recommended.length ? (
-          <section className="mt-16">
-            <div className="flex items-end justify-between gap-4">
-              <div>
-                <p className="eyebrow">Related edit</p>
-                <h2 className="display-title mt-3 text-4xl text-[var(--ink-strong)]">You may also like</h2>
-              </div>
-              <Link href="/products" className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
-                Explore more
-              </Link>
-            </div>
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {recommended.map((item) => (
-                <ProductCard key={item._id} product={item} />
-              ))}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {recommended.map(p => <ProductCard key={p._id} product={p} />)}
             </div>
           </section>
-        ) : null}
+        )}
       </main>
+
+      {/* Simple Footer for Product Page */}
+      <footer className="bg-black text-white py-20 mt-20">
+        <div className="section-container text-center">
+           <img src="/logo.jpg" alt="Azmarino" className="w-16 h-16 mx-auto mb-8 rounded-xl grayscale invert p-1 bg-white" />
+           <p className="label-caps text-white/40 tracking-[0.4em]">Azmarino Premium Global Concierge</p>
+        </div>
+      </footer>
     </div>
   );
 }

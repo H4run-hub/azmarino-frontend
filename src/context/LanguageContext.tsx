@@ -6,19 +6,57 @@ type Lang = 'en' | 'ti';
 
 const translations = {
   en: {
+    // Navigation
     shop: 'Shop',
-    track: 'Track order',
-    orders: 'Orders',
-    signIn: 'Sign in',
-    search: 'Search curated products, fashion, beauty, and tech',
-    trustDelivery: 'Delivery across Europe',
-    trustDeliverySub: 'Fast, tracked dispatch',
-    trustPayment: 'Secure payments',
-    trustPaymentSub: 'Powered by Stripe',
-    trustReturns: 'Flexible returns',
-    trustReturnsSub: 'Simple and customer-first',
-    trustAI: 'Sara support',
-    trustAISub: 'Fast help when you need it',
+    track: 'Track Order',
+    orders: 'My Orders',
+    signIn: 'Sign In',
+    cart: 'Cart',
+    search: 'Search for products, fashion and tech...',
+    
+    // Hero & Home
+    heroTitle: 'Global Premium Collection',
+    heroSubtitle: 'Experience the next generation of e-commerce. Curated global fashion, elite electronics, and worldwide delivery.',
+    exploreBtn: 'Explore Collection',
+    trackBtn: 'Track Your Order',
+    
+    // Sections
+    topRated: 'Top Rated',
+    newArrivals: 'New Arrivals',
+    trending: 'Trending Now',
+    categoriesTitle: 'Shop By Category',
+    discoverMore: 'Discover More',
+    
+    // Trust
+    trustDelivery: 'Worldwide Shipping',
+    trustDeliverySub: 'Fast, tracked delivery to your door',
+    trustPayment: 'Secure Checkout',
+    trustPaymentSub: 'Encrypted payments via Stripe',
+    trustReturns: 'Hassle-Free Returns',
+    trustReturnsSub: '14-day return policy',
+    trustAI: 'Sara AI Support',
+    trustAISub: 'Instant help with your shopping',
+    
+    // Product Detail
+    addToCart: 'Add to Collection',
+    added: '✓ Added to Cart',
+    selectSize: 'Select Size',
+    selectColor: 'Select Color',
+    quantity: 'Quantity',
+    description: 'Description',
+    reviews: 'Customer Reviews',
+    stockIn: 'In Stock',
+    stockOut: 'Out of Stock',
+    related: 'You May Also Like',
+    
+    // Auth & General
+    email: 'Email Address',
+    password: 'Password',
+    login: 'Login',
+    register: 'Register',
+    logout: 'Logout',
+    
+    // Categories
     categories: {
       women: 'Women',
       men: 'Men',
@@ -29,19 +67,57 @@ const translations = {
     },
   },
   ti: {
+    // Navigation
     shop: 'ድኳን',
     track: 'ትእዛዝ ክትትል',
-    orders: 'ትእዛዛት',
+    orders: 'ትእዛዛተይ',
     signIn: 'እቶ',
-    search: 'ፍርያት ድለ',
-    trustDelivery: 'ምብጻሕ ናብ ኤውሮጳ',
-    trustDeliverySub: 'ፍጡን እና ተኸታታሊ',
-    trustPayment: 'ድሕነታዊ ክፍሊት',
-    trustPaymentSub: 'ብ Stripe',
+    cart: 'ኩረት',
+    search: 'ፍርያት፣ ፋሽንን ቴክኖሎጂን ድለ...',
+    
+    // Hero & Home
+    heroTitle: 'ዓለምለኻዊ ክብርቲ ስብስብ',
+    heroSubtitle: 'ሓድሽ ወለዶ ናይ ኢንተርነት ዕዳጋ ተለማመዱ። ዝተመርጹ ዓለምለኻዊ ፋሽን፣ ዘመናዊ ኤሌክትሮኒክስ፣ ከምኡ’ውን ናብ ዝሃለኹምዎ ነብጽሕ።',
+    exploreBtn: 'ስብስብ ዳህስስ',
+    trackBtn: 'ትእዛዝካ ተኸታተል',
+    
+    // Sections
+    topRated: 'ዝበለጸ ተቐባልነት',
+    newArrivals: 'ሓደስቲ ዝኣተዉ',
+    trending: 'ሕጂ ዘለዉ',
+    categoriesTitle: 'ብዓይነት ድለ',
+    discoverMore: 'ተወሳኺ ዳህስስ',
+    
+    // Trust
+    trustDelivery: 'ዓለምለኻዊ መብጻሕቲ',
+    trustDeliverySub: 'ቅልጡፍን ውሑስን መብጻሕቲ',
+    trustPayment: 'ውሑስ ክፍሊት',
+    trustPaymentSub: 'ብ Stripe ዝተሓለወ ክፍሊት',
     trustReturns: 'ቀሊል ምምላስ',
-    trustReturnsSub: 'ብዘይ ጸገም',
-    trustAI: 'ሳራ ሓገዝ',
-    trustAISub: 'ቅልጡፍ ሓገዝ',
+    trustReturnsSub: 'ናይ 14 መዓልቲ ናይ ምምላስ መሰል',
+    trustAI: 'ሳራ AI ሓገዝ',
+    trustAISub: 'ንዕዳጋኹም ቅልጡፍ ሓገዝ',
+    
+    // Product Detail
+    addToCart: 'ናብ ኩረት ወስኽ',
+    added: '✓ ተወሲኹ ኣሎ',
+    selectSize: 'ዓቐን መረጽ',
+    selectColor: 'ሕብሪ መረጽ',
+    quantity: 'ብዝሒ',
+    description: 'መግለጺ',
+    reviews: 'ናይ ዓማዊል ርእይቶ',
+    stockIn: 'ኣብ መኽዘን ኣሎ',
+    stockOut: 'ተወዲኡ',
+    related: 'ክፈትውዎ ትኽእሉ ኢኹም',
+    
+    // Auth & General
+    email: 'ኢመይል ኣድራሻ',
+    password: 'ፓስወርድ',
+    login: 'እቶ',
+    register: 'ተመዝገብ',
+    logout: 'ውጻእ',
+    
+    // Categories
     categories: {
       women: 'ደቂ ኣንስትዮ',
       men: 'ደቂ ተባዕትዮ',
@@ -81,10 +157,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const t = (key: string) => {
     const parts = key.split('.');
-    let value: unknown = translations[lang];
+    let value: any = translations[lang];
 
     for (const part of parts) {
-      value = typeof value === 'object' && value !== null ? (value as Record<string, unknown>)[part] : undefined;
+      if (value && typeof value === 'object' && part in value) {
+        value = value[part];
+      } else {
+        value = undefined;
+        break;
+      }
     }
 
     return typeof value === 'string' ? value : key;

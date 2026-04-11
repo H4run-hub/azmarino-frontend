@@ -25,9 +25,7 @@ export const api = {
 export interface Product {
   _id: string;
   name: string;
-  nameTi?: string;
   description?: string;
-  descriptionTi?: string;
   price: number;
   originalPrice?: number;
   discount?: number;

@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useLang } from '../context/LanguageContext';
 import { StarIcon } from './Icons';
 import type { Product } from '../lib/api';
 
@@ -21,12 +20,11 @@ interface StoredCartItem {
 const formatPrice = (price: number) => `EUR ${price.toFixed(2)}`;
 
 export default function ProductCard({ product }: Props) {
-  const { lang } = useLang();
   const [imageIndex, setImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
 
   const images = [product.image, ...(product.images || [])].filter(Boolean) as string[];
-  const displayName = lang === 'ti' && product.nameTi ? product.nameTi : product.name;
+  const displayName = product.name;
   const discount = product.discount || (
     product.originalPrice && product.originalPrice > product.price
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)

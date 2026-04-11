@@ -1,14 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '../../components/Navbar';
+import ProductCard from '../../components/ProductCard';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
 interface CartItem { id: string; product: any; quantity: number; selectedSize?: string; selectedColor?: string; selected: boolean; }
 
 export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [discover, setDiscover] = useState<any[]>([]);
+  const [discoverPage, setDiscoverPage] = useState(1);
+  const [discoverLoading, setDiscoverLoading] = useState(false);
+  const [hasMoreDiscover, setHasMoreDiscover] = useState(true);
+  const loader = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setCart(JSON.parse(localStorage.getItem('azmarino_cart') || '[]'));
@@ -16,6 +24,30 @@ export default function CartPage() {
     window.addEventListener('cart-updated', onUpdate);
     return () => window.removeEventListener('cart-updated', onUpdate);
   }, []);
+
+  const fetchDiscover = async (nextPage: number) => {
+    if (discoverLoading || !hasMoreDiscover) return;
+    setDiscoverLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/products?sort=-rating&page=${nextPage}&limit=12`);
+      const data = await res.json();
+      const items = data.products || data.data || [];
+      if (items.length === 0) { setHasMoreDiscover(false); }
+      else { setDiscover(prev => [...prev, ...items]); setDiscoverPage(nextPage); }
+    } catch { } finally { setDiscoverLoading(false); }
+  };
+
+  useEffect(() => { fetchDiscover(1); }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMoreDiscover && !discoverLoading) {
+        fetchDiscover(discoverPage + 1);
+      }
+    }, { threshold: 0.1 });
+    if (loader.current) observer.observe(loader.current);
+    return () => observer.disconnect();
+  }, [loader, hasMoreDiscover, discoverLoading, discoverPage]);
 
   const save = (updated: CartItem[]) => {
     localStorage.setItem('azmarino_cart', JSON.stringify(updated));
@@ -85,6 +117,21 @@ export default function CartPage() {
           </div>
         )}
       </main>
+
+      {/* Discover More */}
+      <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-10">
+        <div className="flex items-center gap-4 mb-6">
+          <h2 className="text-sm font-black uppercase tracking-widest text-black whitespace-nowrap">Discover More</h2>
+          <div className="h-px flex-1 bg-gray-100" />
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1.5">
+          {discover.map((p: any) => <ProductCard key={p._id} product={p} />)}
+        </div>
+        <div ref={loader} className="py-8 flex justify-center">
+          {discoverLoading && <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />}
+          {!hasMoreDiscover && discover.length > 0 && <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-300">End of Collection</p>}
+        </div>
+      </section>
     </div>
   );
 }

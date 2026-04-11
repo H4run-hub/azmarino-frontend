@@ -5,27 +5,32 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { PlayIcon, StarIcon } from './Icons';
 import type { Product } from '../lib/api';
+import { useT } from '../i18n/LanguageProvider';
 
-interface Props { product: Product; }
+interface Props {
+  product: Product;
+}
 
 export default function ProductCard({ product }: Props) {
+  const { t } = useT();
   const [imgIdx, setImgIdx] = useState(0);
   const [added, setAdded] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
 
   const allImages = [product.image, ...(product.images || [])].filter(Boolean) as string[];
-  const hasVideo = !!(product as any).videos?.length;
+  const hasVideo = !!(product as unknown as { videos?: unknown[] }).videos?.length;
 
-  const discount = product.discount || (product.originalPrice && product.price < product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0);
-
-  const name = product.name;
+  const discount =
+    product.discount ||
+    (product.originalPrice && product.price < product.originalPrice
+      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+      : 0);
 
   const addToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]');
-    const ex = cart.find((i: any) => i.id === product._id);
+    const ex = cart.find((i: { id: string }) => i.id === product._id);
     if (ex) ex.quantity += 1;
     else cart.push({ id: product._id, product, quantity: 1, selected: true });
     localStorage.setItem('azmarino_cart', JSON.stringify(cart));
@@ -41,9 +46,7 @@ export default function ProductCard({ product }: Props) {
       onMouseEnter={() => allImages.length > 1 && setImgIdx(1)}
       onMouseLeave={() => setImgIdx(0)}
     >
-      {/* Image */}
       <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden flex-shrink-0">
-        {/* Skeleton */}
         {!imgLoaded && <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />}
 
         <Image
@@ -55,7 +58,6 @@ export default function ProductCard({ product }: Props) {
           onLoad={() => setImgLoaded(true)}
         />
 
-        {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
           {discount > 0 && (
             <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-widest">
@@ -64,7 +66,7 @@ export default function ProductCard({ product }: Props) {
           )}
           {product.newArrival && !discount && (
             <span className="bg-black text-white text-[9px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-widest">
-              New
+              {t('product.new')}
             </span>
           )}
           {hasVideo && (
@@ -74,27 +76,33 @@ export default function ProductCard({ product }: Props) {
           )}
         </div>
 
-        {/* Image dots indicator */}
         {allImages.length > 1 && (
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
             {allImages.slice(0, 4).map((_, i) => (
-              <div key={i} className={`rounded-full bg-white/80 transition-all duration-200 ${imgIdx === i ? 'w-3 h-1.5' : 'w-1.5 h-1.5 opacity-60'}`} />
+              <div
+                key={i}
+                className={`rounded-full bg-white/80 transition-all duration-200 ${
+                  imgIdx === i ? 'w-3 h-1.5' : 'w-1.5 h-1.5 opacity-60'
+                }`}
+              />
             ))}
           </div>
         )}
 
-        {/* Quick add — slides up on hover */}
         <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10">
-          <button onClick={addToCart}
-            className={`w-full py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${added ? 'bg-rose-600 text-white' : 'bg-black hover:bg-rose-600 text-white'}`}>
-            {added ? 'Added' : 'Quick Add'}
+          <button
+            onClick={addToCart}
+            className={`w-full py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${
+              added ? 'bg-rose-600 text-white' : 'bg-black hover:bg-rose-600 text-white'
+            }`}
+          >
+            {added ? t('product.added') : t('product.quickAdd')}
           </button>
         </div>
       </div>
 
-      {/* Info */}
-      <div className="p-1.5 flex flex-col gap-0">
-        <h3 className="text-xs font-semibold text-gray-900 line-clamp-1 leading-tight">{name}</h3>
+      <div className="p-2 flex flex-col gap-0">
+        <h3 className="text-xs font-semibold text-gray-900 line-clamp-1 leading-tight">{product.name}</h3>
         <div className="flex items-center justify-between mt-1">
           <div className="flex items-baseline gap-1">
             <span className="text-[13px] font-black text-gray-900">€{product.price.toFixed(2)}</span>

@@ -1,6 +1,4 @@
-import Link from 'next/link';
 import Navbar from '../components/Navbar';
-import ProductCard from '../components/ProductCard';
 import HomeClient from './HomeClient';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';

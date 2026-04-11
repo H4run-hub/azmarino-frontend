@@ -3,14 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { useLang } from '../context/LanguageContext';
 import { PlayIcon, StarIcon } from './Icons';
 import type { Product } from '../lib/api';
 
 interface Props { product: Product; }
 
 export default function ProductCard({ product }: Props) {
-  const { lang } = useLang();
   const [imgIdx, setImgIdx] = useState(0);
   const [added, setAdded] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -21,7 +19,7 @@ export default function ProductCard({ product }: Props) {
   const discount = product.discount || (product.originalPrice && product.price < product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0);
 
-  const name = lang === 'ti' && product.nameTi ? product.nameTi : product.name;
+  const name = product.name;
 
   const addToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -39,7 +37,7 @@ export default function ProductCard({ product }: Props) {
   return (
     <Link
       href={`/products/${product._id}`}
-      className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col"
+      className="group relative bg-white rounded-none overflow-hidden border border-gray-100 hover:border-black transition-all duration-300 flex flex-col"
       onMouseEnter={() => allImages.length > 1 && setImgIdx(1)}
       onMouseLeave={() => setImgIdx(0)}
     >
@@ -60,17 +58,17 @@ export default function ProductCard({ product }: Props) {
         {/* Badges */}
         <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
           {discount > 0 && (
-            <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full tracking-wide">
+            <span className="bg-rose-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-widest">
               -{discount}%
             </span>
           )}
           {product.newArrival && !discount && (
-            <span className="bg-black text-white text-[10px] font-black px-2 py-0.5 rounded-full tracking-wide">
-              NEW
+            <span className="bg-black text-white text-[9px] font-black px-1.5 py-0.5 rounded-none uppercase tracking-widest">
+              New
             </span>
           )}
           {hasVideo && (
-            <span className="bg-black/70 text-white rounded-full p-1 flex items-center justify-center w-5 h-5">
+            <span className="bg-black/70 text-white rounded-none p-1 flex items-center justify-center w-5 h-5">
               <PlayIcon className="w-2.5 h-2.5" />
             </span>
           )}
@@ -88,8 +86,8 @@ export default function ProductCard({ product }: Props) {
         {/* Quick add — slides up on hover */}
         <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10">
           <button onClick={addToCart}
-            className={`w-full py-2.5 text-xs font-black uppercase tracking-widest transition-colors ${added ? 'bg-green-500 text-white' : 'bg-black/90 hover:bg-black text-white'}`}>
-            {added ? (lang === 'ti' ? '✓ ተወሲኹ' : '✓ Added') : (lang === 'ti' ? 'ቅልጡፍ ወስኽ' : 'Quick Add')}
+            className={`w-full py-2.5 text-[10px] font-black uppercase tracking-widest transition-colors ${added ? 'bg-rose-600 text-white' : 'bg-black hover:bg-rose-600 text-white'}`}>
+            {added ? 'Added' : 'Quick Add'}
           </button>
         </div>
       </div>

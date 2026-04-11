@@ -3,27 +3,25 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import ProductCard from '../components/ProductCard';
-import { useLang } from '../context/LanguageContext';
 import { ShipIcon, ShieldIcon, ReturnIcon, BotIcon } from '../components/Icons';
 
 const CATEGORIES = [
-  { id: 'women-clothing', key: 'women', color: 'from-rose-400 to-rose-600', pattern: '👗' },
-  { id: 'men-clothing', key: 'men', color: 'from-slate-600 to-slate-800', pattern: '👔' },
-  { id: 'shoes', key: 'shoes', color: 'from-amber-400 to-orange-500', pattern: '👟' },
-  { id: 'electronics', key: 'electronics', color: 'from-blue-500 to-indigo-600', pattern: '📱' },
-  { id: 'accessories', key: 'accessories', color: 'from-purple-400 to-purple-600', pattern: '✨' },
-  { id: 'beauty', key: 'beauty', color: 'from-pink-400 to-pink-600', pattern: '💄' },
+  { id: 'women-clothing', label: 'Women' },
+  { id: 'men-clothing', label: 'Men' },
+  { id: 'shoes', label: 'Shoes' },
+  { id: 'electronics', label: 'Electronics' },
+  { id: 'accessories', label: 'Accessories' },
+  { id: 'beauty', label: 'Beauty' },
 ];
 
 const TRUST = [
-  { Icon: ShipIcon, key: 'trustDelivery', subKey: 'trustDeliverySub', color: 'text-rose-600', bg: 'bg-rose-50' },
-  { Icon: ShieldIcon, key: 'trustPayment', subKey: 'trustPaymentSub', color: 'text-blue-600', bg: 'bg-blue-50' },
-  { Icon: ReturnIcon, key: 'trustReturns', subKey: 'trustReturnsSub', color: 'text-green-600', bg: 'bg-green-50' },
-  { Icon: BotIcon, key: 'trustAI', subKey: 'trustAISub', color: 'text-purple-600', bg: 'bg-purple-50' },
+  { Icon: ShipIcon, label: 'Free EU Delivery' },
+  { Icon: ShieldIcon, label: 'Secure Payment' },
+  { Icon: ReturnIcon, label: '30-Day Returns' },
+  { Icon: BotIcon, label: 'AI Support 24/7' },
 ];
 
 export default function HomeClient({ topRated, newArrivals }: { topRated: any[]; newArrivals: any[] }) {
-  const { t } = useLang();
   const [products, setProducts] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -66,11 +64,11 @@ export default function HomeClient({ topRated, newArrivals }: { topRated: any[];
 
   return (
     <div className="bg-white">
-      {/* Hero - ULTRA Professional & Minimal */}
+      {/* Hero */}
       <section className="bg-[#050505] text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.05]"
           style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-        
+
         <div className="relative max-w-7xl mx-auto px-4 py-12 md:py-20 flex flex-col md:flex-row items-center gap-10">
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-5xl md:text-7xl font-black leading-[0.95] mb-4 tracking-tighter">
@@ -93,36 +91,33 @@ export default function HomeClient({ topRated, newArrivals }: { topRated: any[];
         </div>
       </section>
 
-      {/* Trust bar - Denser */}
+      {/* Trust bar */}
       <section className="py-4 border-b border-gray-100 bg-gray-50/50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {TRUST.map(({ Icon, key, color }) => (
-              <div key={key} className="flex items-center justify-center gap-2">
-                <Icon className={`w-4 h-4 ${color}`} />
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-900">{t(key)}</span>
+            {TRUST.map(({ Icon, label }) => (
+              <div key={label} className="flex items-center justify-center gap-2">
+                <Icon className="w-4 h-4 text-rose-600" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-900">{label}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Categories - Denser Grid */}
+      {/* Categories */}
       <section className="py-8 bg-white">
         <div className="max-w-7xl mx-auto px-4 text-center mb-6">
           <h2 className="text-xs font-black uppercase tracking-[0.3em] text-rose-600 mb-1">Collections</h2>
-          <h3 className="text-2xl font-black text-black">SHOP BY CATEGORY</h3>
+          <h3 className="text-2xl font-black text-black uppercase tracking-tighter">Shop by Category</h3>
         </div>
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-3 md:grid-cols-6 gap-1.5">
             {CATEGORIES.map(cat => (
               <Link key={cat.id} href={`/products?category=${cat.id}`}
-                className={`group relative aspect-[4/5] overflow-hidden bg-gray-100 flex flex-col items-center justify-center border border-gray-100 hover:border-black transition-all`}>
-                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">
-                  {cat.pattern}
-                </span>
-                <p className="text-black font-black text-[10px] uppercase tracking-wider">
-                  {t(`categories.${cat.key}`)}
+                className="group relative aspect-[4/5] overflow-hidden bg-gray-100 flex flex-col items-center justify-center border border-gray-100 hover:border-black transition-all">
+                <p className="text-black font-black text-[10px] uppercase tracking-widest group-hover:text-rose-600 transition-colors">
+                  {cat.label}
                 </p>
               </Link>
             ))}
@@ -136,33 +131,30 @@ export default function HomeClient({ topRated, newArrivals }: { topRated: any[];
             <h2 className="text-xl font-black text-black tracking-tighter uppercase">Recommended for You</h2>
             <div className="h-px flex-1 bg-gray-100 mx-4" />
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-2 sm:px-4">
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1.5">
-            {/* Initial Items */}
             {topRated.map((p: any) => <ProductCard key={p._id} product={p} />)}
             {newArrivals.map((p: any) => <ProductCard key={p._id} product={p} />)}
-            
-            {/* Fetched Items */}
             {products.map((p: any) => <ProductCard key={p._id} product={p} />)}
           </div>
-          
+
           {/* Loader */}
           <div ref={loader} className="py-10 flex justify-center w-full">
             {loading && (
               <div className="flex flex-col items-center gap-2">
-                <div className="w-6 h-6 border-2 border-rose-600 border-t-transparent rounded-full animate-spin" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading Excellence...</span>
+                <div className="w-6 h-6 border-2 border-rose-600 border-t-transparent rounded-none animate-spin" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Loading...</span>
               </div>
             )}
             {!hasMore && (
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">You've reached the end of the collection.</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">End of Collection</span>
             )}
           </div>
         </div>
       </section>
 
-      {/* Footer - ULTRA Minimal */}
+      {/* Footer */}
       <footer className="bg-black text-white py-12 border-t border-white/10">
         <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
             <div className="relative w-40 h-10 mb-8 opacity-80">

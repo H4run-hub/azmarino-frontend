@@ -65,51 +65,62 @@ export default function CartPage() {
   const total = cart.reduce((sum, i) => sum + (i.product?.price || 0) * i.quantity, 0);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <h1 className="text-2xl font-black text-slate-800 mb-6">Shopping Cart</h1>
+      <main className="flex-1 max-w-5xl mx-auto px-2 sm:px-4 lg:px-6 py-6 w-full">
+        <div className="flex items-center gap-3 mb-6">
+          <h1 className="text-xs font-black uppercase tracking-[0.3em] text-rose-600">Bag</h1>
+          <h2 className="text-2xl font-black text-black uppercase tracking-tighter">Shopping Cart</h2>
+          <div className="h-px flex-1 bg-gray-100" />
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{cart.length} Items</span>
+        </div>
+
         {cart.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🛒</div>
-            <p className="text-slate-500 mb-6">Your cart is empty</p>
-            <Link href="/products" className="bg-rose-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-rose-700 transition-colors">Browse Products</Link>
+          <div className="border border-gray-100 py-20 flex flex-col items-center">
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-6">Your bag is empty</p>
+            <Link href="/products" className="bg-black hover:bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3 rounded-none transition-colors">
+              Browse Collection
+            </Link>
           </div>
         ) : (
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 space-y-3">
+          <div className="flex flex-col lg:flex-row gap-1.5">
+            <div className="flex-1 space-y-1.5">
               {cart.map(item => (
-                <div key={item.id} className="bg-white rounded-2xl p-4 flex gap-4 border border-slate-100 shadow-sm">
-                  <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                <div key={item.id} className="bg-white border border-gray-100 hover:border-black transition-colors p-1.5 flex gap-2">
+                  <div className="relative w-20 h-20 bg-gray-50 flex-shrink-0">
                     <Image src={item.product?.image || '/placeholder.jpg'} alt={item.product?.name || ''} fill className="object-cover" unoptimized />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-slate-800 text-sm line-clamp-2">{item.product?.name}</h3>
-                    {item.selectedSize && <p className="text-xs text-slate-400">Size: {item.selectedSize}</p>}
-                    {item.selectedColor && <p className="text-xs text-slate-400">Color: {item.selectedColor}</p>}
-                    <p className="text-rose-600 font-bold mt-1">€{item.product?.price?.toFixed(2)}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <button onClick={() => remove(item.id)} className="text-slate-400 hover:text-red-500 text-xs">✕</button>
-                    <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-2 py-1">
-                      <button onClick={() => updateQty(item.id, -1)} className="text-slate-600 font-bold w-5 text-center">−</button>
-                      <span className="text-sm font-semibold w-5 text-center">{item.quantity}</span>
-                      <button onClick={() => updateQty(item.id, 1)} className="text-slate-600 font-bold w-5 text-center">+</button>
+                  <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
+                    <div>
+                      <h3 className="text-xs font-bold text-black line-clamp-2 leading-tight">{item.product?.name}</h3>
+                      <div className="flex gap-2 mt-0.5">
+                        {item.selectedSize && <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Size: {item.selectedSize}</span>}
+                        {item.selectedColor && <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Color: {item.selectedColor}</span>}
+                      </div>
                     </div>
-                    <p className="text-xs text-slate-500 font-semibold">€{((item.product?.price || 0) * item.quantity).toFixed(2)}</p>
+                    <p className="text-[13px] font-black text-black">€{item.product?.price?.toFixed(2)}</p>
+                  </div>
+                  <div className="flex flex-col items-end justify-between py-0.5">
+                    <button onClick={() => remove(item.id)} className="text-gray-300 hover:text-rose-600 text-xs font-black transition-colors" title="Remove">✕</button>
+                    <div className="flex items-center border border-gray-200">
+                      <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-black font-black hover:bg-black hover:text-white transition-colors">−</button>
+                      <span className="text-[11px] font-black w-6 text-center">{item.quantity}</span>
+                      <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-black font-black hover:bg-black hover:text-white transition-colors">+</button>
+                    </div>
+                    <p className="text-[10px] font-black text-rose-600">€{((item.product?.price || 0) * item.quantity).toFixed(2)}</p>
                   </div>
                 </div>
               ))}
             </div>
             <div className="lg:w-72">
-              <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm sticky top-20">
-                <h2 className="font-black text-slate-800 text-lg mb-4">Order Summary</h2>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm text-slate-600"><span>Subtotal</span><span>€{total.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-sm text-slate-600"><span>Delivery</span><span className="text-green-600 font-semibold">FREE</span></div>
-                  <div className="border-t border-slate-200 pt-2 flex justify-between font-black text-slate-800"><span>Total</span><span className="text-rose-600">€{total.toFixed(2)}</span></div>
+              <div className="bg-white border border-gray-100 p-4 sticky top-16">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-600 mb-3">Summary</h2>
+                <div className="space-y-1.5 mb-4">
+                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-700"><span>Subtotal</span><span className="text-black">€{total.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-700"><span>Delivery</span><span className="text-rose-600">Free</span></div>
+                  <div className="border-t border-gray-100 pt-2 flex justify-between"><span className="text-[10px] font-black uppercase tracking-widest text-black">Total</span><span className="text-base font-black text-black">€{total.toFixed(2)}</span></div>
                 </div>
-                <Link href="/checkout" className="block w-full bg-rose-600 text-white text-center font-bold py-3 rounded-xl hover:bg-rose-700 transition-colors">
+                <Link href="/checkout" className="block w-full bg-black hover:bg-rose-600 text-white text-center text-[10px] font-black uppercase tracking-widest py-3 rounded-none transition-colors">
                   Checkout
                 </Link>
               </div>
@@ -119,16 +130,16 @@ export default function CartPage() {
       </main>
 
       {/* Discover More */}
-      <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-10">
+      <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-10 w-full">
         <div className="flex items-center gap-4 mb-6">
-          <h2 className="text-sm font-black uppercase tracking-widest text-black whitespace-nowrap">Discover More</h2>
+          <h2 className="text-xs font-black uppercase tracking-[0.3em] text-black whitespace-nowrap">Discover More</h2>
           <div className="h-px flex-1 bg-gray-100" />
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1.5">
           {discover.map((p: any) => <ProductCard key={p._id} product={p} />)}
         </div>
         <div ref={loader} className="py-8 flex justify-center">
-          {discoverLoading && <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />}
+          {discoverLoading && <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-none animate-spin" />}
           {!hasMoreDiscover && discover.length > 0 && <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-300">End of Collection</p>}
         </div>
       </section>

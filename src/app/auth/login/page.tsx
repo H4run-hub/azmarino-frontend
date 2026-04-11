@@ -7,6 +7,9 @@ import Navbar from '../../../components/Navbar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
+const INPUT_CLS = "w-full border border-gray-200 rounded-none px-3 py-2.5 text-xs font-bold focus:outline-none focus:border-black focus:ring-1 focus:ring-black bg-white";
+const LABEL_CLS = "block text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 mb-1";
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
@@ -30,32 +33,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
-            <h1 className="text-2xl font-black text-slate-800 mb-2">Sign In</h1>
-            <p className="text-slate-500 text-sm mb-6">Welcome back to Azmarino</p>
-            {error && <div className="bg-red-50 text-red-700 text-sm p-3 rounded-xl mb-4">{error}</div>}
-            <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="w-full max-w-sm">
+          <div className="bg-white border border-gray-100 p-6">
+            <h1 className="text-xs font-black uppercase tracking-[0.3em] text-rose-600">Welcome Back</h1>
+            <h2 className="text-2xl font-black text-black uppercase tracking-tighter mb-1">Sign In</h2>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400 mb-5">Access your account</p>
+            {error && <div className="border border-rose-600 text-rose-600 text-[10px] font-black uppercase tracking-widest p-2 mb-4">{error}</div>}
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <label className="text-sm font-semibold text-slate-700 mb-1 block">Email</label>
+                <label className={LABEL_CLS}>Email</label>
                 <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="you@example.com" />
+                  className={INPUT_CLS} placeholder="you@example.com" />
               </div>
               <div>
-                <label className="text-sm font-semibold text-slate-700 mb-1 block">Password</label>
+                <label className={LABEL_CLS}>Password</label>
                 <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="••••••••" />
+                  className={INPUT_CLS} placeholder="••••••••" />
               </div>
               <button type="submit" disabled={loading}
-                className="w-full bg-rose-600 text-white font-bold py-3 rounded-xl hover:bg-rose-700 disabled:opacity-50 transition-colors">
+                className="w-full bg-black hover:bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-none disabled:opacity-50 transition-colors">
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
-            <p className="text-center text-sm text-slate-500 mt-4">
-              Don&apos;t have an account? <Link href="/auth/register" className="text-rose-600 font-semibold hover:text-rose-700">Sign Up</Link>
+            <p className="text-center text-[9px] font-black uppercase tracking-widest text-gray-400 mt-4">
+              Don&apos;t have an account?{' '}
+              <Link href="/auth/register" className="text-rose-600 hover:text-black transition-colors">Sign Up</Link>
             </p>
           </div>
         </div>

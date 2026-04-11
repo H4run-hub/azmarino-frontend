@@ -5,6 +5,9 @@ import Navbar from '../../components/Navbar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
+const INPUT_CLS = "w-full border border-gray-200 rounded-none px-3 py-2.5 text-xs font-bold focus:outline-none focus:border-black focus:ring-1 focus:ring-black bg-white";
+const LABEL_CLS = "block text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 mb-1";
+
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState('');
   const [email, setEmail] = useState('');
@@ -24,54 +27,60 @@ export default function TrackOrderPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      <main className="flex-1 max-w-2xl mx-auto px-4 sm:px-6 py-12 w-full">
-        <h1 className="text-2xl font-black text-slate-800 mb-2">Track Your Order</h1>
-        <p className="text-slate-500 text-sm mb-8">Enter your order number and email to track your delivery</p>
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 mb-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+      <main className="flex-1 max-w-2xl mx-auto px-2 sm:px-4 lg:px-6 py-6 w-full">
+        <div className="flex items-center gap-3 mb-2">
+          <h1 className="text-xs font-black uppercase tracking-[0.3em] text-rose-600">Tracking</h1>
+          <h2 className="text-2xl font-black text-black uppercase tracking-tighter">Track Order</h2>
+          <div className="h-px flex-1 bg-gray-100" />
+        </div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">Enter your order number and email to track delivery</p>
+
+        <div className="bg-white border border-gray-100 p-4 mb-2">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="text-sm font-semibold text-slate-700 mb-1 block">Order Number</label>
+              <label className={LABEL_CLS}>Order Number</label>
               <input required value={orderNumber} onChange={e => setOrderNumber(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="AZ-123456" />
+                className={INPUT_CLS} placeholder="AZ-123456" />
             </div>
             <div>
-              <label className="text-sm font-semibold text-slate-700 mb-1 block">Email</label>
+              <label className={LABEL_CLS}>Email</label>
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                className="w-full border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500" placeholder="you@example.com" />
+                className={INPUT_CLS} placeholder="you@example.com" />
             </div>
-            {error && <div className="bg-red-50 text-red-700 text-sm p-3 rounded-xl">{error}</div>}
-            <button type="submit" disabled={loading} className="w-full bg-rose-600 text-white font-bold py-3 rounded-xl hover:bg-rose-700 disabled:opacity-50 transition-colors">
+            {error && <div className="border border-rose-600 text-rose-600 text-[10px] font-black uppercase tracking-widest p-2">{error}</div>}
+            <button type="submit" disabled={loading} className="w-full bg-black hover:bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-none disabled:opacity-50 transition-colors">
               {loading ? 'Tracking...' : 'Track Order'}
             </button>
           </form>
         </div>
+
         {order && (
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6">
+          <div className="bg-white border border-gray-100 p-4">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-xs text-slate-400">Order Number</p>
-                <p className="font-black text-slate-800 text-lg">{order.orderNumber}</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Order Number</p>
+                <p className="text-sm font-black text-black tracking-tight">{order.orderNumber}</p>
               </div>
-              <span className="px-3 py-1 rounded-full text-sm font-semibold text-blue-600 bg-blue-50">{order.status}</span>
+              <span className="px-2 py-1 text-[9px] font-black uppercase tracking-widest text-rose-600 border border-rose-600">{order.status}</span>
             </div>
             {order.trackingNumber && (
-              <div className="bg-slate-50 rounded-xl p-3 mb-4">
-                <p className="text-xs text-slate-400 mb-1">Tracking Number</p>
-                <p className="font-bold text-slate-800">{order.trackingNumber}</p>
+              <div className="bg-gray-50 border border-gray-100 p-3 mb-4">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1">Tracking Number</p>
+                <p className="text-xs font-black text-black tracking-tight">{order.trackingNumber}</p>
               </div>
             )}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {order.items?.map((item: any, i: number) => (
-                <div key={i} className="flex justify-between text-sm">
-                  <span className="text-slate-700">{item.name} x{item.quantity}</span>
-                  <span className="font-semibold text-slate-800">EUR {(item.price * item.quantity).toFixed(2)}</span>
+                <div key={i} className="flex justify-between text-[10px] font-bold">
+                  <span className="text-gray-700 truncate pr-2">{item.name} <span className="text-gray-400">x{item.quantity}</span></span>
+                  <span className="text-black font-black flex-shrink-0">€{(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
-              <div className="border-t border-slate-200 pt-2 flex justify-between font-bold">
-                <span>Total</span>
-                <span className="text-rose-600">EUR {order.total?.toFixed(2)}</span>
+              <div className="border-t border-gray-100 pt-2 flex justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-black">Total</span>
+                <span className="text-sm font-black text-black">€{order.total?.toFixed(2)}</span>
               </div>
             </div>
           </div>

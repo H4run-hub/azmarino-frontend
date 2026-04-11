@@ -3,12 +3,10 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLang } from '../context/LanguageContext';
-import { BagIcon, SearchIcon, UserIcon, MenuIcon, CloseIcon, GlobeIcon } from './Icons';
+import { BagIcon, SearchIcon, UserIcon, MenuIcon, CloseIcon } from './Icons';
 
 export default function Navbar() {
   const router = useRouter();
-  const { lang, toggle, t } = useLang();
   const [cartCount, setCartCount] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -64,37 +62,27 @@ export default function Navbar() {
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder={t('search')}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:bg-white transition-all placeholder:text-gray-400"
+                placeholder="Search the collection..."
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-none text-xs uppercase tracking-widest font-bold focus:outline-none focus:ring-1 focus:ring-black focus:bg-white transition-all placeholder:text-gray-400"
               />
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
           </form>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-600 flex-shrink-0">
-            <Link href="/products" className="hover:text-rose-600 transition-colors">{t('shop')}</Link>
-            <Link href="/track" className="hover:text-rose-600 transition-colors">{t('track')}</Link>
-            {isLoggedIn && <Link href="/orders" className="hover:text-rose-600 transition-colors">{t('orders')}</Link>}
+          <nav className="hidden md:flex items-center gap-5 text-[10px] font-black uppercase tracking-widest text-gray-700 flex-shrink-0">
+            <Link href="/products" className="hover:text-rose-600 transition-colors">Shop</Link>
+            <Link href="/track" className="hover:text-rose-600 transition-colors">Track</Link>
+            {isLoggedIn && <Link href="/orders" className="hover:text-rose-600 transition-colors">Orders</Link>}
           </nav>
 
           {/* Right actions */}
           <div className="flex items-center gap-0.5 ml-auto">
-            {/* Language toggle */}
-            <button
-              onClick={toggle}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-xs font-bold text-gray-600"
-              title="Switch language"
-            >
-              <GlobeIcon className="w-3.5 h-3.5" />
-              <span>{lang === 'en' ? 'ትግ' : 'EN'}</span>
-            </button>
-
             {/* Cart */}
-            <Link href="/cart" className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <Link href="/cart" className="relative p-2 rounded-none hover:bg-gray-100 transition-colors">
               <BagIcon className="w-5 h-5 text-gray-700" />
               {cartCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-rose-600 text-white text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                <span className="absolute -top-0.5 -right-0.5 bg-rose-600 text-white text-[10px] font-black rounded-none w-4 h-4 flex items-center justify-center leading-none">
                   {cartCount > 9 ? '9+' : cartCount}
                 </span>
               )}
@@ -102,17 +90,17 @@ export default function Navbar() {
 
             {/* Profile */}
             {isLoggedIn ? (
-              <Link href="/profile" className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+              <Link href="/profile" className="p-2 rounded-none hover:bg-gray-100 transition-colors">
                 <UserIcon className="w-5 h-5 text-gray-700" />
               </Link>
             ) : (
-              <Link href="/auth/login" className="hidden sm:block bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold px-3 py-1.5 rounded-lg transition-colors ml-1">
-                {t('signIn')}
+              <Link href="/auth/login" className="hidden sm:block bg-black hover:bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-none transition-colors ml-1">
+                Sign In
               </Link>
             )}
 
             {/* Mobile menu button */}
-            <button onClick={() => setMobileOpen(o => !o)} className="md:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-700 transition-colors ml-0.5">
+            <button onClick={() => setMobileOpen(o => !o)} className="md:hidden p-2 rounded-none hover:bg-gray-100 text-gray-700 transition-colors ml-0.5">
               {mobileOpen ? <CloseIcon className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
             </button>
           </div>
@@ -125,8 +113,8 @@ export default function Navbar() {
           <form onSubmit={handleSearch}>
             <div className="relative">
               <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder={t('search')}
-                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
+                placeholder="Search the collection..."
+                className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-none text-xs uppercase tracking-widest font-bold focus:outline-none focus:ring-1 focus:ring-black"
               />
               <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             </div>
@@ -134,33 +122,28 @@ export default function Navbar() {
 
           <nav className="space-y-0.5">
             {[
-              { href: '/products', label: t('shop') },
-              { href: '/track', label: t('track') },
+              { href: '/products', label: 'Shop' },
+              { href: '/track', label: 'Track' },
               ...(isLoggedIn ? [
-                { href: '/orders', label: t('orders') },
-                { href: '/profile', label: lang === 'en' ? 'Profile' : 'ፕሮፋይል' },
+                { href: '/orders', label: 'Orders' },
+                { href: '/profile', label: 'Profile' },
               ] : []),
             ].map(l => (
               <Link key={l.href} href={l.href} onClick={() => setMobileOpen(false)}
-                className="flex items-center px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-colors">
+                className="flex items-center px-3 py-2.5 rounded-none text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-rose-50 hover:text-rose-600 transition-colors">
                 {l.label}
               </Link>
             ))}
           </nav>
 
-          <div className="flex gap-2 pt-1">
-            <button onClick={toggle}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 text-sm font-bold text-gray-700 hover:border-rose-600 hover:text-rose-600 transition-colors">
-              <GlobeIcon className="w-4 h-4" />
-              {lang === 'en' ? 'ትግርኛ' : 'English'}
-            </button>
-            {!isLoggedIn && (
+          {!isLoggedIn && (
+            <div className="pt-1">
               <Link href="/auth/login" onClick={() => setMobileOpen(false)}
-                className="flex-1 bg-rose-600 text-white text-sm font-bold py-2 px-4 rounded-xl text-center hover:bg-rose-700 transition-colors">
-                {t('signIn')}
+                className="block w-full bg-black text-white text-[10px] font-black uppercase tracking-widest py-2.5 px-4 rounded-none text-center hover:bg-rose-600 transition-colors">
+                Sign In
               </Link>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
     </header>

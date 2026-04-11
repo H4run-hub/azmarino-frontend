@@ -1,117 +1,133 @@
 'use client';
 
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useState } from 'react';
 import { useLang } from '../context/LanguageContext';
-import { PlayIcon, StarIcon } from './Icons';
+import { StarIcon } from './Icons';
 import type { Product } from '../lib/api';
 
-interface Props { product: Product; }
+interface Props {
+  product: Product;
+}
+
+interface StoredCartItem {
+  id: string;
+  product: Product;
+  quantity: number;
+  selected?: boolean;
+}
+
+const formatPrice = (price: number) => `EUR ${price.toFixed(2)}`;
 
 export default function ProductCard({ product }: Props) {
   const { lang } = useLang();
-  const [imgIdx, setImgIdx] = useState(0);
+  const [imageIndex, setImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
 
-  const allImages = [product.image, ...(product.images || [])].filter(Boolean) as string[];
-  const hasVideo = !!(product as any).videos?.length;
+  const images = [product.image, ...(product.images || [])].filter(Boolean) as string[];
+  const displayName = lang === 'ti' && product.nameTi ? product.nameTi : product.name;
+  const discount = product.discount || (
+    product.originalPrice && product.originalPrice > product.price
+      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+      : 0
+  );
 
-  const discount = product.discount || (product.originalPrice && product.price < product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0);
+  const addToCart = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
 
-  const name = lang === 'ti' && product.nameTi ? product.nameTi : product.name;
+    const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]') as StoredCartItem[];
+    const existing = cart.find((item) => item.id === product._id);
 
-  const addToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]');
-    const ex = cart.find((i: any) => i.id === product._id);
-    if (ex) ex.quantity += 1;
+    if (existing) existing.quantity += 1;
     else cart.push({ id: product._id, product, quantity: 1, selected: true });
+
     localStorage.setItem('azmarino_cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cart-updated'));
     setAdded(true);
-    setTimeout(() => setAdded(false), 1600);
+    setTimeout(() => setAdded(false), 1400);
   };
 
   return (
     <Link
       href={`/products/${product._id}`}
-      className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300 flex flex-col"
-      onMouseEnter={() => allImages.length > 1 && setImgIdx(1)}
-      onMouseLeave={() => setImgIdx(0)}
+      onMouseEnter={() => images.length > 1 && setImageIndex(1)}
+      onMouseLeave={() => setImageIndex(0)}
+      className="group block"
     >
-      {/* Image */}
-      <div className="relative aspect-[3/4] bg-gray-50 overflow-hidden flex-shrink-0">
-        {/* Skeleton */}
-        {!imgLoaded && <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 animate-pulse" />}
+      <article className="surface-solid overflow-hidden rounded-[1.65rem] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_40px_rgba(43,40,36,0.11)]">
+        <div className="relative aspect-[4/5] overflow-hidden bg-[linear-gradient(180deg,#f6efe5,#ebe1d1)]">
+          <Image
+            src={images[imageIndex] || '/logo.jpg'}
+            alt={product.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition duration-500 group-hover:scale-[1.04]"
+          />
 
-        <Image
-          src={allImages[imgIdx] || '/placeholder.jpg'}
-          alt={product.name}
-          fill
-          className={`object-cover transition-all duration-500 group-hover:scale-[1.04] ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-          onLoad={() => setImgLoaded(true)}
-        />
-
-        {/* Badges */}
-        <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
-          {discount > 0 && (
-            <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full tracking-wide">
-              -{discount}%
-            </span>
-          )}
-          {product.newArrival && !discount && (
-            <span className="bg-black text-white text-[10px] font-black px-2 py-0.5 rounded-full tracking-wide">
-              NEW
-            </span>
-          )}
-          {hasVideo && (
-            <span className="bg-black/70 text-white rounded-full p-1 flex items-center justify-center w-5 h-5">
-              <PlayIcon className="w-2.5 h-2.5" />
-            </span>
-          )}
-        </div>
-
-        {/* Image dots indicator */}
-        {allImages.length > 1 && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 z-10">
-            {allImages.slice(0, 4).map((_, i) => (
-              <div key={i} className={`rounded-full bg-white/80 transition-all duration-200 ${imgIdx === i ? 'w-3 h-1.5' : 'w-1.5 h-1.5 opacity-60'}`} />
-            ))}
-          </div>
-        )}
-
-        {/* Quick add — slides up on hover */}
-        <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10">
-          <button onClick={addToCart}
-            className={`w-full py-2.5 text-xs font-black uppercase tracking-widest transition-colors ${added ? 'bg-green-500 text-white' : 'bg-black/90 hover:bg-black text-white'}`}>
-            {added ? (lang === 'ti' ? '✓ ተወሲኹ' : '✓ Added') : (lang === 'ti' ? 'ቅልጡፍ ወስኽ' : 'Quick Add')}
-          </button>
-        </div>
-      </div>
-
-      {/* Info */}
-      <div className="p-1.5 flex flex-col gap-0">
-        <h3 className="text-xs font-semibold text-gray-900 line-clamp-1 leading-tight">{name}</h3>
-        <div className="flex items-center justify-between mt-1">
-          <div className="flex items-baseline gap-1">
-            <span className="text-[13px] font-black text-gray-900">€{product.price.toFixed(2)}</span>
-            {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-[10px] text-gray-400 line-through">€{product.originalPrice.toFixed(2)}</span>
-            )}
-          </div>
-          {product.rating && (
-            <div className="flex items-center gap-0.5">
-              <StarIcon className="w-2.5 h-2.5 text-amber-400" filled />
-              <span className="text-[10px] text-gray-500 font-bold">{product.rating}</span>
+          <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
+            <div className="flex flex-wrap gap-2">
+              {discount > 0 && (
+                <span className="rounded-full bg-[var(--ink-strong)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.24em] text-white">
+                  Save {discount}%
+                </span>
+              )}
+              {product.newArrival && (
+                <span className="rounded-full bg-white/82 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.24em] text-[var(--accent)]">
+                  New
+                </span>
+              )}
             </div>
-          )}
+
+            {product.rating ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/84 px-2.5 py-1 text-[10px] font-bold text-[var(--ink-strong)]">
+                <StarIcon className="h-3 w-3 text-[var(--gold)]" filled />
+                {product.rating.toFixed(1)}
+              </span>
+            ) : null}
+          </div>
+
+          <div className="absolute inset-x-0 bottom-0 translate-y-full p-3 transition duration-300 group-hover:translate-y-0">
+            <button
+              onClick={addToCart}
+              className={`w-full rounded-full px-4 py-3 text-xs font-extrabold uppercase tracking-[0.24em] transition ${
+                added ? 'bg-[var(--gold)] text-[var(--ink-strong)]' : 'bg-[var(--ink-strong)] text-white hover:bg-[var(--accent)]'
+              }`}
+            >
+              {added ? 'Added to cart' : 'Quick add'}
+            </button>
+          </div>
         </div>
-      </div>
+
+        <div className="space-y-3 px-4 pb-5 pt-4">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-[var(--muted)]">
+              {(product.category || 'collection').replace(/-/g, ' ')}
+            </p>
+            <h3 className="text-sm font-semibold leading-6 text-[var(--ink-strong)]">
+              {displayName}
+            </h3>
+          </div>
+
+          <div className="flex items-end justify-between gap-2">
+            <div className="flex flex-col">
+              <span className="text-base font-extrabold text-[var(--ink-strong)]">{formatPrice(product.price)}</span>
+              {product.originalPrice && product.originalPrice > product.price ? (
+                <span className="text-xs font-medium text-[var(--muted)] line-through">
+                  {formatPrice(product.originalPrice)}
+                </span>
+              ) : null}
+            </div>
+
+            {product.stock !== undefined ? (
+              <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+                {product.stock > 0 ? 'In stock' : 'Low stock'}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </article>
     </Link>
   );
 }

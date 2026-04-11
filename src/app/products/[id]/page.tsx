@@ -1,276 +1,406 @@
 'use client';
 
-import { useState, useEffect, use, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { use, useEffect, useState } from 'react';
 import Navbar from '../../../components/Navbar';
 import ProductCard from '../../../components/ProductCard';
 import type { Product } from '../../../lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
-interface ProductWithVideo extends Product {
+interface ProductWithMedia extends Product {
   videos?: string[];
 }
 
+interface Review {
+  _id?: string;
+  id?: string;
+  name?: string;
+  date?: string;
+  rating?: number;
+  comment?: string;
+}
+
+interface ProductResponse {
+  data?: ProductWithMedia;
+}
+
+interface ProductListResponse {
+  products?: Product[];
+  data?: Product[];
+}
+
+interface ReviewResponse {
+  reviews?: Review[];
+}
+
+interface StoredCartItem {
+  id: string;
+  product: ProductWithMedia;
+  quantity: number;
+  selectedSize?: string;
+  selectedColor?: string;
+  selected?: boolean;
+}
+
+const formatPrice = (value: number) => `EUR ${value.toFixed(2)}`;
+
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const router = useRouter();
-  const [product, setProduct] = useState<ProductWithVideo | null>(null);
+  const [product, setProduct] = useState<ProductWithMedia | null>(null);
+  const [recommended, setRecommended] = useState<Product[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedMedia, setSelectedMedia] = useState(0);
+  const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [error, setError] = useState('');
   const [added, setAdded] = useState(false);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
-  // Infinite scroll recommended
-  const [recommended, setRecommended] = useState<any[]>([]);
-  const [recPage, setRecPage] = useState(1);
-  const [recLoading, setRecLoading] = useState(false);
-  const [hasMoreRec, setHasMoreRec] = useState(true);
-  const loader = useRef(null);
-
-  // Zoom state
-  const [zoom, setZoom] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    setIsLoggedIn(!!localStorage.getItem('azmarino_token'));
-    fetch(`${API_URL}/products/${id}`)
-      .then(r => r.json())
-      .then(d => {
-        const p = d.data || d;
-        setProduct(p);
-        setLoading(false);
-        // Load initial recommended based on category
-        if (p.category) {
-            fetch(`${API_URL}/products?category=${p.category}&limit=8&exclude=${id}`)
-                .then(r => r.json())
-                .then(rd => setRecommended(rd.products || rd.data || []));
-        }
-      })
-      .catch(() => setLoading(false));
-      
-    fetch(`${API_URL}/reviews/product/${id}`)
-      .then(r => r.json())
-      .then(d => setReviews(Array.isArray(d) ? d : d.reviews || []))
-      .catch(() => {});
+    let cancelled = false;
+
+    const load = async () => {
+      setLoading(true);
+      try {
+        const productResponse = await fetch(`${API_URL}/products/${id}`);
+        const productData = (await productResponse.json()) as ProductResponse;
+        const nextProduct = (productData.data || productData) as ProductWithMedia;
+
+        if (cancelled) return;
+        setProduct(nextProduct);
+
+        const [reviewResponse, relatedResponse] = await Promise.all([
+          fetch(`${API_URL}/reviews/${id}`),
+          fetch(`${API_URL}/products?category=${nextProduct.category}&limit=6`),
+        ]);
+
+        const reviewData = (await reviewResponse.json()) as ReviewResponse;
+        const relatedData = (await relatedResponse.json()) as ProductListResponse;
+
+        if (cancelled) return;
+        setReviews(reviewData.reviews || []);
+        setRecommended((relatedData.products || relatedData.data || []).filter((item: Product) => item._id !== id).slice(0, 4));
+      } catch {
+        if (!cancelled) setProduct(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
-  const fetchMoreRec = async () => {
-    if (recLoading || !hasMoreRec || !product) return;
-    setRecLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/products?category=${product.category}&page=${recPage + 1}&limit=12&exclude=${id}`);
-      const data = await res.json();
-      const newItems = data.products || data.data || [];
-      if (newItems.length === 0) setHasMoreRec(false);
-      else {
-        setRecommended(prev => [...prev, ...newItems]);
-        setRecPage(p => p + 1);
-      }
-    } finally { setRecLoading(false); }
-  };
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-        if (entries[0].isIntersecting && hasMoreRec) fetchMoreRec();
-    }, { threshold: 0.1 });
-    if (loader.current) observer.observe(loader.current);
-    return () => observer.disconnect();
-  }, [loader, hasMoreRec, recPage, recLoading, product]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    const x = ((e.pageX - left) / width) * 100;
-    const y = ((e.pageY - top) / height) * 100;
-    setMousePos({ x, y });
-  };
-
-  if (loading) return <><Navbar /><div className="max-w-7xl mx-auto px-4 py-10 animate-pulse"><div className="grid md:grid-cols-2 gap-10"><div className="aspect-square bg-gray-100 rounded-2xl" /><div className="space-y-4"><div className="h-8 bg-gray-100 rounded w-3/4" /><div className="h-12 bg-gray-100 rounded w-1/4" /><div className="h-40 bg-gray-100 rounded" /></div></div></div></>;
-
-  if (!product) return <><Navbar /><div className="flex flex-col items-center justify-center min-h-[50vh]"><p>Product not found.</p></div></>;
-
-  const allImages = [product.image, ...(product.images || [])].filter(Boolean) as string[];
-  const allMedia = [
-    ...allImages.map(src => ({ type: 'image' as const, src })),
-    ...(product.videos || []).map(src => ({ type: 'video' as const, src })),
-  ];
-  const currentMedia = allMedia[selectedMedia] || { type: 'image' as const, src: '/placeholder.jpg' };
-  const discount = product.discount || (product.originalPrice && product.price < product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0);
-
   const addToCart = () => {
-    const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]');
-    const key = `${product._id}|size:${selectedSize}|color:${selectedColor}`;
-    const existing = cart.find((i: any) => i.id === key);
+    if (!product) {
+      return;
+    }
+
+    if (product?.sizes?.length && !selectedSize) {
+      setError('Please choose a size before adding this product.');
+      return;
+    }
+    if (product?.colors?.length && !selectedColor) {
+      setError('Please choose a color before adding this product.');
+      return;
+    }
+
+    const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]') as StoredCartItem[];
+    const itemId = `${product?._id}|${selectedSize || 'default'}|${selectedColor || 'default'}`;
+    const existing = cart.find((item) => item.id === itemId);
+
     if (existing) existing.quantity += quantity;
-    else cart.push({ id: key, product, quantity, selectedSize, selectedColor, selected: true });
+    else {
+      cart.push({
+        id: itemId,
+        product,
+        quantity,
+        selectedSize,
+        selectedColor,
+        selected: true,
+      });
+    }
+
     localStorage.setItem('azmarino_cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cart-updated'));
+    setError('');
     setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
+    setTimeout(() => setAdded(false), 1400);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <main className="section-shell py-16">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="surface-solid aspect-[4/5] animate-pulse rounded-[2rem]" />
+            <div className="surface-solid min-h-[32rem] animate-pulse rounded-[2rem]" />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <main className="section-shell py-16">
+          <div className="surface-solid rounded-[2rem] px-6 py-14 text-center">
+            <p className="eyebrow">Unavailable</p>
+            <h1 className="display-title mt-4 text-4xl text-[var(--ink-strong)]">This product could not be loaded.</h1>
+            <Link href="/products" className="button-primary mt-8">
+              Back to catalogue
+            </Link>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  const gallery = [product.image, ...(product.images || [])].filter(Boolean) as string[];
+  const discount = product.discount || (
+    product.originalPrice && product.originalPrice > product.price
+      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+      : 0
+  );
+
   return (
-    <div className="bg-white min-h-screen">
+    <div className="min-h-screen">
       <Navbar />
-      <main className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4">
-        {/* Breadcrumb - Denser */}
-        <nav className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 flex items-center gap-1.5 overflow-hidden whitespace-nowrap">
-          <Link href="/" className="hover:text-black transition-colors">Home</Link>
+      <main className="section-shell pb-16">
+        <nav className="flex flex-wrap items-center gap-2 py-4 text-xs font-bold uppercase tracking-[0.18em] text-[var(--muted)]">
+          <Link href="/">Home</Link>
           <span>/</span>
-          <Link href="/products" className="hover:text-black transition-colors">Shop</Link>
+          <Link href="/products">Products</Link>
           <span>/</span>
-          <span className="text-black truncate">{product.category?.replace(/-/g, ' ')}</span>
+          <span className="text-[var(--ink-strong)]">{product.category?.replace(/-/g, ' ')}</span>
         </nav>
 
-        <div className="grid md:grid-cols-2 gap-6 lg:gap-10 mb-10">
-          {/* Media Gallery - Zoomable */}
-          <div className="space-y-2">
-            <div 
-              className="relative aspect-[4/5] bg-gray-50 overflow-hidden cursor-crosshair border border-gray-100"
-              onMouseEnter={() => setZoom(true)}
-              onMouseLeave={() => setZoom(false)}
-              onMouseMove={handleMouseMove}
-            >
-              {currentMedia.type === 'video' ? (
-                <video src={currentMedia.src} controls autoPlay muted loop className="w-full h-full object-cover" />
-              ) : (
-                <>
-                  <Image src={currentMedia.src} alt={product.name} fill className={`object-cover transition-opacity duration-300 ${zoom ? 'opacity-0' : 'opacity-100'}`} priority />
-                  {zoom && (
-                    <div 
-                      className="absolute inset-0 z-10 w-full h-full"
-                      style={{
-                        backgroundImage: `url(${currentMedia.src})`,
-                        backgroundPosition: `${mousePos.x}% ${mousePos.y}%`,
-                        backgroundSize: '250%',
-                        backgroundRepeat: 'no-repeat'
-                      }}
-                    />
-                  )}
-                </>
-              )}
-              {discount > 0 && <span className="absolute top-2 left-2 bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 uppercase tracking-tighter shadow-xl">-{discount}% OFF</span>}
+        <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]">
+          <div className="space-y-4">
+            <div className="surface-solid overflow-hidden rounded-[2rem] bg-[linear-gradient(180deg,#f8f1e8,#ecdfd1)]">
+              <div className="relative aspect-[4/5]">
+                <Image
+                  src={gallery[selectedImage] || '/logo.jpg'}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="object-cover"
+                  priority
+                />
+              </div>
             </div>
 
-            {/* Scrollable Thumbnails */}
-            {allMedia.length > 1 && (
-              <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
-                {allMedia.map((media, i) => (
-                  <button key={i} onClick={() => setSelectedMedia(i)} className={`relative w-14 h-14 flex-shrink-0 border transition-all ${selectedMedia === i ? 'border-black' : 'border-gray-100 grayscale hover:grayscale-0'}`}>
-                    {media.type === 'video' ? <div className="w-full h-full bg-black flex items-center justify-center text-white text-[8px]">VIDEO</div> : <Image src={media.src} alt="" fill className="object-cover" sizes="56px" />}
+            {gallery.length > 1 && (
+              <div className="grid grid-cols-4 gap-3">
+                {gallery.map((image, index) => (
+                  <button
+                    key={image + index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`surface-solid relative aspect-square overflow-hidden rounded-[1.4rem] ${
+                      selectedImage === index ? 'ring-2 ring-[var(--accent)]' : ''
+                    }`}
+                  >
+                    <Image src={image} alt="" fill className="object-cover" sizes="160px" />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Product Info - Denser & ULTRA Professional */}
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-[10px] font-black text-rose-600 uppercase tracking-[0.2em] mb-0.5">{product.category?.replace(/-/g, ' ')}</p>
-              <h1 className="text-xl md:text-3xl font-black text-black leading-[1.1] tracking-tighter uppercase">{product.name}</h1>
-              <div className="flex items-center gap-3 mt-2">
-                 <div className="flex items-center gap-0.5">
-                    <span className="text-amber-400 text-xs">★</span>
-                    <span className="text-[11px] font-black text-black">{product.rating}</span>
-                 </div>
-                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{product.reviews || reviews.length} REVIEWS</span>
-                 <span className="h-3 w-px bg-gray-200" />
-                 <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">IN STOCK</span>
+          <div className="surface-panel rounded-[2rem] px-6 py-7 md:px-8 md:py-8">
+            <p className="eyebrow">{product.category?.replace(/-/g, ' ')}</p>
+            <h1 className="display-title mt-4 text-5xl text-[var(--ink-strong)] md:text-6xl">
+              {product.name}
+            </h1>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-[var(--muted)]">
+              {product.rating ? <span>{product.rating.toFixed(1)} rating</span> : null}
+              <span>{reviews.length || product.reviews || 0} reviews</span>
+              <span>{product.stock && product.stock > 0 ? 'Available now' : 'Limited stock'}</span>
+            </div>
+
+            <div className="mt-6 flex items-end gap-3 border-y border-[var(--line)] py-5">
+              <span className="text-3xl font-extrabold text-[var(--ink-strong)]">{formatPrice(product.price)}</span>
+              {product.originalPrice && product.originalPrice > product.price ? (
+                <span className="text-sm font-medium text-[var(--muted)] line-through">
+                  {formatPrice(product.originalPrice)}
+                </span>
+              ) : null}
+              {discount > 0 ? (
+                <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.22em] text-[var(--accent)]">
+                  Save {discount}%
+                </span>
+              ) : null}
+            </div>
+
+            <p className="soft-copy mt-6 text-base">
+              {product.description || 'A carefully selected product from the Azmarino catalogue.'}
+            </p>
+
+            {product.sizes?.length ? (
+              <div className="mt-8">
+                <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[var(--muted)]">Select size</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {product.sizes.map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => setSelectedSize(size)}
+                      className={`rounded-full px-4 py-3 text-xs font-extrabold uppercase tracking-[0.18em] transition ${
+                        selectedSize === size
+                          ? 'bg-[var(--ink-strong)] text-white'
+                          : 'border border-[var(--line)] bg-white/72 text-[var(--ink-strong)]'
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {product.colors?.length ? (
+              <div className="mt-6">
+                <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[var(--muted)]">Select color</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => setSelectedColor(color)}
+                      className={`rounded-full px-4 py-3 text-xs font-extrabold uppercase tracking-[0.18em] transition ${
+                        selectedColor === color
+                          ? 'bg-[var(--accent)] text-white'
+                          : 'border border-[var(--line)] bg-white/72 text-[var(--ink-strong)]'
+                      }`}
+                    >
+                      {color}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              <div className="inline-flex items-center rounded-full border border-[var(--line)] bg-white/72">
+                <button onClick={() => setQuantity((current) => Math.max(1, current - 1))} className="px-4 py-3 text-sm font-bold">
+                  -
+                </button>
+                <span className="min-w-10 px-2 text-center text-sm font-extrabold">{quantity}</span>
+                <button onClick={() => setQuantity((current) => current + 1)} className="px-4 py-3 text-sm font-bold">
+                  +
+                </button>
+              </div>
+
+              <button
+                onClick={addToCart}
+                className={`button-primary min-w-[16rem] ${added ? 'opacity-90' : ''}`}
+              >
+                {added ? 'Added to cart' : 'Add to cart'}
+              </button>
+            </div>
+
+            {error ? (
+              <div className="mt-5 rounded-[1.2rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
+                {error}
+              </div>
+            ) : null}
+
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-[1.3rem] border border-[var(--line)] bg-white/72 p-4">
+                <p className="text-sm font-bold text-[var(--ink-strong)]">Secure checkout</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">Stripe-backed payment and transparent order totals.</p>
+              </div>
+              <div className="rounded-[1.3rem] border border-[var(--line)] bg-white/72 p-4">
+                <p className="text-sm font-bold text-[var(--ink-strong)]">Delivery clarity</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">Tracked dispatch with practical delivery estimates.</p>
+              </div>
+              <div className="rounded-[1.3rem] border border-[var(--line)] bg-white/72 p-4">
+                <p className="text-sm font-bold text-[var(--ink-strong)]">Customer-first returns</p>
+                <p className="mt-2 text-sm text-[var(--muted)]">Straightforward support if the fit is not right.</p>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="flex items-baseline gap-2 py-3 border-y border-gray-100">
-              <span className="text-3xl font-black text-black tracking-tighter">€{product.price.toFixed(2)}</span>
-              {product.originalPrice && product.originalPrice > product.price && (
-                <span className="text-sm text-gray-400 line-through font-bold">€{product.originalPrice.toFixed(2)}</span>
+        <section className="mt-14 grid gap-10 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <div>
+            <p className="eyebrow">Reviews</p>
+            <h2 className="display-title mt-3 text-4xl text-[var(--ink-strong)]">What customers are saying</h2>
+
+            <div className="mt-6 space-y-4">
+              {reviews.length ? (
+                reviews.map((review, index) => (
+                  <article key={review._id || review.id || `${review.name || 'review'}-${index}`} className="surface-solid rounded-[1.6rem] p-5">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-sm font-bold text-[var(--ink-strong)]">{review.name || 'Customer'}</p>
+                        <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">{review.date || 'Verified review'}</p>
+                      </div>
+                      <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-extrabold text-[var(--accent)]">
+                        {review.rating || 5}/5
+                      </span>
+                    </div>
+                    <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{review.comment || 'No written feedback yet.'}</p>
+                  </article>
+                ))
+              ) : (
+                <div className="surface-solid rounded-[1.6rem] p-6 text-sm text-[var(--muted)]">
+                  Reviews will appear here as customers purchase and share feedback.
+                </div>
               )}
             </div>
+          </div>
 
-            {/* Description - Compact */}
-            <div className="text-[11px] text-gray-500 leading-relaxed font-medium">
-              <p className="line-clamp-4">{product.description}</p>
-            </div>
-
-            {/* Variants */}
-            <div className="space-y-4">
-                {product.sizes && product.sizes.length > 0 && (
-                <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-black flex justify-between">
-                        <span>Select Size</span>
-                        {selectedSize && <span className="text-rose-600">Selected: {selectedSize}</span>}
-                    </p>
-                    <div className="grid grid-cols-5 gap-1.5">
-                    {product.sizes.map(size => (
-                        <button key={size} onClick={() => setSelectedSize(size)} className={`h-10 text-[10px] font-black border transition-all ${selectedSize === size ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-900 hover:border-black'}`}>{size}</button>
-                    ))}
-                    </div>
-                </div>
-                )}
-
-                {product.colors && product.colors.length > 0 && (
-                <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-black flex justify-between">
-                        <span>Select Color</span>
-                        {selectedColor && <span className="text-rose-600">Selected: {selectedColor}</span>}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                    {product.colors.map(color => (
-                        <button key={color} onClick={() => setSelectedColor(color)} className={`px-4 h-10 text-[10px] font-black border transition-all uppercase tracking-tighter ${selectedColor === color ? 'border-black bg-black text-white' : 'border-gray-200 text-gray-900 hover:border-black'}`}>{color}</button>
-                    ))}
-                    </div>
-                </div>
-                )}
-            </div>
-
-            {/* Add to Cart - Denser */}
-            <div className="pt-4 space-y-3">
-                <div className="flex gap-2">
-                    <div className="flex items-center border border-gray-200 h-12">
-                        <button onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-10 h-full hover:bg-gray-50 text-xs font-bold">−</button>
-                        <span className="w-10 text-center text-xs font-black">{quantity}</span>
-                        <button onClick={() => setQuantity(q => q + 1)} className="w-10 h-full hover:bg-gray-50 text-xs font-bold">+</button>
-                    </div>
-                    <button 
-                        onClick={addToCart}
-                        disabled={added}
-                        className={`flex-1 h-12 text-[11px] font-black uppercase tracking-[0.2em] transition-all ${added ? 'bg-green-600 text-white' : 'bg-black text-white hover:bg-rose-600 active:scale-[0.98]'}`}
-                    >
-                        {added ? '✓ Item Added' : 'Add to Collection'}
-                    </button>
-                </div>
+          <div className="surface-panel rounded-[1.8rem] p-6">
+            <p className="eyebrow">Details</p>
+            <div className="mt-4 space-y-5">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Category</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--ink-strong)]">{product.category?.replace(/-/g, ' ')}</p>
+              </div>
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Availability</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--ink-strong)]">
+                  {product.stock && product.stock > 0 ? `${product.stock} units available` : 'Check support for availability'}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Delivery promise</p>
+                <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+                  Orders are processed with tracked dispatch and can be followed inside your Azmarino account.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Recommended - Infinite */}
-        <section className="mt-16 border-t border-gray-100 pt-10">
-            <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl font-black text-black tracking-tighter uppercase">Discover More</h2>
-                <div className="h-px flex-1 bg-gray-100 mx-6" />
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1.5">
-                {recommended.map((p: any) => <ProductCard key={p._id} product={p} />)}
-            </div>
-            <div ref={loader} className="py-12 flex justify-center">
-                {recLoading && <div className="w-6 h-6 border-2 border-black border-t-transparent rounded-full animate-spin" />}
-            </div>
         </section>
-      </main>
 
-      {/* Mini Footer */}
-      <footer className="bg-[#050505] text-white py-10 mt-10 text-center border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4">
-            <img src="/logo.jpg" alt="Azmarino" className="w-24 h-auto mx-auto mb-6 opacity-50 grayscale invert" />
-            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-600">Azmarino Premium Global Concierge</p>
-        </div>
-      </footer>
+        {recommended.length ? (
+          <section className="mt-16">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="eyebrow">Related edit</p>
+                <h2 className="display-title mt-3 text-4xl text-[var(--ink-strong)]">You may also like</h2>
+              </div>
+              <Link href="/products" className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+                Explore more
+              </Link>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {recommended.map((item) => (
+                <ProductCard key={item._id} product={item} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </main>
     </div>
   );
 }

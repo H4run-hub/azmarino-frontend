@@ -1,137 +1,152 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
-import ProductCard from '../../components/ProductCard';
+import type { Product } from '../../lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
+interface CartItem {
+  id: string;
+  product: Product;
+  quantity: number;
+  selected?: boolean;
+  selectedSize?: string;
+  selectedColor?: string;
+}
 
-interface CartItem { id: string; product: any; quantity: number; selectedSize?: string; selectedColor?: string; selected: boolean; }
+const formatPrice = (value: number) => `EUR ${value.toFixed(2)}`;
 
 export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [discover, setDiscover] = useState<any[]>([]);
-  const [discoverPage, setDiscoverPage] = useState(1);
-  const [discoverLoading, setDiscoverLoading] = useState(false);
-  const [hasMoreDiscover, setHasMoreDiscover] = useState(true);
-  const loader = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setCart(JSON.parse(localStorage.getItem('azmarino_cart') || '[]'));
-    const onUpdate = () => setCart(JSON.parse(localStorage.getItem('azmarino_cart') || '[]'));
-    window.addEventListener('cart-updated', onUpdate);
-    return () => window.removeEventListener('cart-updated', onUpdate);
+    const loadCart = () => {
+      const stored = JSON.parse(localStorage.getItem('azmarino_cart') || '[]') as CartItem[];
+      setCart(stored);
+    };
+    loadCart();
+    window.addEventListener('cart-updated', loadCart);
+    return () => window.removeEventListener('cart-updated', loadCart);
   }, []);
 
-  const fetchDiscover = async (nextPage: number) => {
-    if (discoverLoading || !hasMoreDiscover) return;
-    setDiscoverLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/products?sort=-rating&page=${nextPage}&limit=12`);
-      const data = await res.json();
-      const items = data.products || data.data || [];
-      if (items.length === 0) { setHasMoreDiscover(false); }
-      else { setDiscover(prev => [...prev, ...items]); setDiscoverPage(nextPage); }
-    } catch { } finally { setDiscoverLoading(false); }
-  };
-
-  useEffect(() => { fetchDiscover(1); }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMoreDiscover && !discoverLoading) {
-        fetchDiscover(discoverPage + 1);
-      }
-    }, { threshold: 0.1 });
-    if (loader.current) observer.observe(loader.current);
-    return () => observer.disconnect();
-  }, [loader, hasMoreDiscover, discoverLoading, discoverPage]);
-
-  const save = (updated: CartItem[]) => {
-    localStorage.setItem('azmarino_cart', JSON.stringify(updated));
+  const saveCart = (nextCart: CartItem[]) => {
+    localStorage.setItem('azmarino_cart', JSON.stringify(nextCart));
     window.dispatchEvent(new Event('cart-updated'));
-    setCart(updated);
+    setCart(nextCart);
   };
 
-  const updateQty = (id: string, delta: number) => {
-    const updated = cart.map(i => i.id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i);
-    save(updated);
+  const updateQuantity = (id: string, delta: number) => {
+    saveCart(
+      cart.map((item) => item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)
+    );
   };
 
-  const remove = (id: string) => save(cart.filter(i => i.id !== id));
+  const removeItem = (id: string) => {
+    saveCart(cart.filter((item) => item.id !== id));
+  };
 
-  const total = cart.reduce((sum, i) => sum + (i.product?.price || 0) * i.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+  const shipping = subtotal > 50 ? 0 : 4.99;
+  const total = subtotal + shipping;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Navbar />
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
-        <h1 className="text-2xl font-black text-slate-800 mb-6">Shopping Cart</h1>
-        {cart.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="text-6xl mb-4">🛒</div>
-            <p className="text-slate-500 mb-6">Your cart is empty</p>
-            <Link href="/products" className="bg-rose-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-rose-700 transition-colors">Browse Products</Link>
+      <main className="section-shell pb-16">
+        <section className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
+          <p className="eyebrow">Cart</p>
+          <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <h1 className="display-title text-5xl text-[var(--ink-strong)] md:text-6xl">Review your selections before checkout.</h1>
+              <p className="soft-copy mt-4 text-base">
+                Adjust quantities, confirm your chosen variants, and continue into a cleaner Stripe-backed payment flow.
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/68 px-5 py-4 text-sm text-[var(--muted)]">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[var(--accent)]">Items</p>
+              <p className="mt-2 font-semibold text-[var(--ink-strong)]">{cart.length} products selected</p>
+            </div>
           </div>
+        </section>
+
+        {cart.length === 0 ? (
+          <section className="surface-solid mt-8 rounded-[2rem] px-6 py-16 text-center">
+            <p className="eyebrow">Cart empty</p>
+            <h2 className="display-title mt-4 text-4xl text-[var(--ink-strong)]">Your next favorite item is still waiting.</h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-[var(--muted)]">
+              Browse the catalogue to discover the latest premium fashion, beauty, and technology picks.
+            </p>
+            <Link href="/products" className="button-primary mt-8">
+              Browse the catalogue
+            </Link>
+          </section>
         ) : (
-          <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-1 space-y-3">
-              {cart.map(item => (
-                <div key={item.id} className="bg-white rounded-2xl p-4 flex gap-4 border border-slate-100 shadow-sm">
-                  <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                    <Image src={item.product?.image || '/placeholder.jpg'} alt={item.product?.name || ''} fill className="object-cover" unoptimized />
+          <section className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="space-y-4">
+              {cart.map((item) => (
+                <article key={item.id} className="surface-solid flex flex-col gap-5 rounded-[1.8rem] p-5 sm:flex-row sm:items-center">
+                  <div className="relative aspect-square w-full max-w-[8rem] overflow-hidden rounded-[1.4rem] bg-[linear-gradient(180deg,#f6efe5,#ebe1d1)]">
+                    <Image src={item.product?.image || '/logo.jpg'} alt={item.product?.name || 'Product'} fill className="object-cover" sizes="128px" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-slate-800 text-sm line-clamp-2">{item.product?.name}</h3>
-                    {item.selectedSize && <p className="text-xs text-slate-400">Size: {item.selectedSize}</p>}
-                    {item.selectedColor && <p className="text-xs text-slate-400">Color: {item.selectedColor}</p>}
-                    <p className="text-rose-600 font-bold mt-1">€{item.product?.price?.toFixed(2)}</p>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <button onClick={() => remove(item.id)} className="text-slate-400 hover:text-red-500 text-xs">✕</button>
-                    <div className="flex items-center gap-2 bg-slate-100 rounded-lg px-2 py-1">
-                      <button onClick={() => updateQty(item.id, -1)} className="text-slate-600 font-bold w-5 text-center">−</button>
-                      <span className="text-sm font-semibold w-5 text-center">{item.quantity}</span>
-                      <button onClick={() => updateQty(item.id, 1)} className="text-slate-600 font-bold w-5 text-center">+</button>
+
+                  <div className="flex-1">
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-[var(--muted)]">
+                      {(item.product?.category || 'collection').replace(/-/g, ' ')}
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold text-[var(--ink-strong)]">{item.product?.name}</h2>
+                    <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+                      {item.selectedSize ? <span>Size {item.selectedSize}</span> : null}
+                      {item.selectedColor ? <span>Color {item.selectedColor}</span> : null}
                     </div>
-                    <p className="text-xs text-slate-500 font-semibold">€{((item.product?.price || 0) * item.quantity).toFixed(2)}</p>
                   </div>
-                </div>
+
+                  <div className="flex flex-col gap-4 sm:items-end">
+                    <p className="text-base font-extrabold text-[var(--ink-strong)]">{formatPrice(item.product?.price || 0)}</p>
+                    <div className="inline-flex items-center rounded-full border border-[var(--line)] bg-white/72">
+                      <button onClick={() => updateQuantity(item.id, -1)} className="px-4 py-3 text-sm font-bold">-</button>
+                      <span className="min-w-10 px-2 text-center text-sm font-extrabold">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="px-4 py-3 text-sm font-bold">+</button>
+                    </div>
+                    <button onClick={() => removeItem(item.id)} className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">
+                      Remove
+                    </button>
+                  </div>
+                </article>
               ))}
             </div>
-            <div className="lg:w-72">
-              <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm sticky top-20">
-                <h2 className="font-black text-slate-800 text-lg mb-4">Order Summary</h2>
-                <div className="space-y-2 mb-4">
-                  <div className="flex justify-between text-sm text-slate-600"><span>Subtotal</span><span>€{total.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-sm text-slate-600"><span>Delivery</span><span className="text-green-600 font-semibold">FREE</span></div>
-                  <div className="border-t border-slate-200 pt-2 flex justify-between font-black text-slate-800"><span>Total</span><span className="text-rose-600">€{total.toFixed(2)}</span></div>
+
+            <aside className="surface-panel h-fit rounded-[2rem] p-6 xl:sticky xl:top-28">
+              <p className="eyebrow">Summary</p>
+              <div className="mt-5 space-y-4 text-sm">
+                <div className="flex items-center justify-between text-[var(--muted)]">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-[var(--ink-strong)]">{formatPrice(subtotal)}</span>
                 </div>
-                <Link href="/checkout" className="block w-full bg-rose-600 text-white text-center font-bold py-3 rounded-xl hover:bg-rose-700 transition-colors">
-                  Checkout
+                <div className="flex items-center justify-between text-[var(--muted)]">
+                  <span>Shipping</span>
+                  <span className="font-semibold text-[var(--ink-strong)]">{shipping === 0 ? 'Included' : formatPrice(shipping)}</span>
+                </div>
+                <div className="border-t border-[var(--line)] pt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Total</span>
+                    <span className="text-xl font-extrabold text-[var(--ink-strong)]">{formatPrice(total)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <Link href="/checkout" className="button-primary w-full">
+                  Proceed to checkout
+                </Link>
+                <Link href="/products" className="button-secondary w-full">
+                  Continue shopping
                 </Link>
               </div>
-            </div>
-          </div>
+            </aside>
+          </section>
         )}
       </main>
-
-      {/* Discover More */}
-      <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-10">
-        <div className="flex items-center gap-4 mb-6">
-          <h2 className="text-sm font-black uppercase tracking-widest text-black whitespace-nowrap">Discover More</h2>
-          <div className="h-px flex-1 bg-gray-100" />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1.5">
-          {discover.map((p: any) => <ProductCard key={p._id} product={p} />)}
-        </div>
-        <div ref={loader} className="py-8 flex justify-center">
-          {discoverLoading && <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />}
-          {!hasMoreDiscover && discover.length > 0 && <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-300">End of Collection</p>}
-        </div>
-      </section>
     </div>
   );
 }

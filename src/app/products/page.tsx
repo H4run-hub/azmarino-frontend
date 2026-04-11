@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef, Suspense } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 import ProductCard from '../../components/ProductCard';
@@ -10,8 +10,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/
 
 const CATEGORIES = [
   { id: '', label: 'All' },
-  { id: 'men-clothing', label: "Men's" },
-  { id: 'women-clothing', label: "Women's" },
+  { id: 'women-clothing', label: 'Women' },
+  { id: 'men-clothing', label: 'Men' },
   { id: 'kids-clothing', label: 'Kids' },
   { id: 'electronics', label: 'Electronics' },
   { id: 'shoes', label: 'Shoes' },
@@ -22,124 +22,169 @@ const CATEGORIES = [
 
 function ProductsContent() {
   const searchParams = useSearchParams();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState(searchParams.get('category') || '');
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const loader = useRef<HTMLDivElement>(null);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  const fetchProducts = useCallback(async (reset = false, nextPage?: number) => {
+  const initialSearch = searchParams.get('search') || '';
+  const initialCategory = searchParams.get('category') || '';
+  const featured = searchParams.get('featured') === 'true';
+  const newArrival = searchParams.get('newArrival') === 'true';
+
+  const [search, setSearch] = useState(initialSearch);
+  const [category, setCategory] = useState(initialCategory);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+
+  useEffect(() => {
+    setSearch(initialSearch);
+    setCategory(initialCategory);
+  }, [initialCategory, initialSearch]);
+
+  const activeLabel = useMemo(() => {
+    if (featured) return 'Featured selection';
+    if (newArrival) return 'New arrivals';
+    if (category) return `Category: ${category.replace(/-/g, ' ')}`;
+    if (search) return `Search: "${search}"`;
+    return 'All products';
+  }, [category, featured, newArrival, search]);
+
+  const fetchProducts = useCallback(async (reset = false, nextPage = 1) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (search) params.set('search', search);
+      if (search.trim()) params.set('search', search.trim());
       if (category) params.set('category', category);
-      params.set('page', reset ? '1' : String(nextPage ?? page));
-      params.set('limit', '24');
-      if (searchParams.get('featured')) params.set('featured', 'true');
-      if (searchParams.get('newArrival')) params.set('newArrival', 'true');
+      if (featured) params.set('featured', 'true');
+      if (newArrival) params.set('newArrival', 'true');
+      params.set('page', String(nextPage));
+      params.set('limit', '16');
 
-      const res = await fetch(`${API_URL}/products?${params}`);
-      const data = await res.json();
-      const items = data.products || data.data || [];
-      if (reset) {
-        setProducts(items);
-        setPage(1);
-      } else {
-        setProducts(prev => [...prev, ...items]);
-        setPage(nextPage ?? page);
-      }
-      setHasMore(items.length >= 24);
-    } catch { } finally { setLoading(false); }
-  }, [search, category, page, searchParams]);
+      const response = await fetch(`${API_URL}/products?${params.toString()}`);
+      const data = await response.json();
+      const incoming = data.products || data.data || [];
 
-  // Reset on filter change
-  useEffect(() => { fetchProducts(true); }, [search, category]);
+      setProducts((current) => (reset ? incoming : [...current, ...incoming]));
+      setPage(nextPage);
+      setHasMore(incoming.length >= 16);
+    } catch {
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [category, featured, newArrival, search]);
 
-  // IntersectionObserver for infinite scroll
   useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMore && !loading) {
-        fetchProducts(false, page + 1);
-      }
-    }, { threshold: 0.1 });
-    if (loader.current) observer.observe(loader.current);
+    fetchProducts(true, 1);
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !loading) {
+          fetchProducts(false, page + 1);
+        }
+      },
+      { threshold: 0.2 }
+    );
+
+    if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
-  }, [loader, hasMore, loading, page, fetchProducts]);
+  }, [fetchProducts, hasMore, loading, page]);
 
   return (
-    <main className="flex-1 max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-6 w-full">
-      {/* Search + Filters */}
-      <div className="mb-4">
-        <input
-          type="text" placeholder="Search products..." value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full border border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent"
-        />
-      </div>
-      <div className="flex gap-1.5 flex-wrap mb-6 overflow-x-auto">
-        {CATEGORIES.map(c => (
-          <button key={c.id} onClick={() => setCategory(c.id)}
-            className={`px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-colors whitespace-nowrap ${category === c.id ? 'bg-black text-white' : 'border border-gray-200 text-gray-700 hover:border-black'}`}>
-            {c.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Grid */}
-      {loading && products.length === 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1.5">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="bg-white overflow-hidden border border-gray-100 animate-pulse">
-              <div className="aspect-[3/4] bg-gray-100" />
-              <div className="p-2 space-y-1.5"><div className="h-2.5 bg-gray-100 rounded w-1/2" /><div className="h-3 bg-gray-100 rounded" /></div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1.5">
-            {products.map(p => <ProductCard key={p._id} product={p} />)}
+    <main className="section-shell pb-16">
+      <section className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
+        <p className="eyebrow">Catalogue</p>
+        <div className="mt-4 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+          <div className="max-w-2xl">
+            <h1 className="display-title text-5xl text-[var(--ink-strong)] md:text-6xl">
+              Discover the full Azmarino product edit.
+            </h1>
+            <p className="soft-copy mt-4 text-base">
+              Search by taste, browse by category, and explore a cleaner global marketplace for fashion, beauty, and technology.
+            </p>
           </div>
-          {products.length === 0 && (
-            <div className="text-center py-20">
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">No products found.</p>
-            </div>
-          )}
-        </>
-      )}
 
-      {/* Infinite scroll trigger */}
-      <div ref={loader} className="py-10 flex justify-center">
-        {loading && products.length > 0 && (
-          <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+          <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/68 px-5 py-4 text-sm text-[var(--muted)]">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[var(--accent)]">Active filter</p>
+            <p className="mt-2 font-semibold text-[var(--ink-strong)]">{activeLabel}</p>
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold uppercase tracking-[0.2em] text-[var(--muted)]">Search</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by product, material, or category"
+              className="w-full rounded-full border border-[var(--line)] bg-white px-5 py-4 text-sm text-[var(--ink-strong)] outline-none transition focus:border-[var(--accent)]"
+            />
+          </label>
+
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((item) => (
+              <button
+                key={item.id || 'all'}
+                onClick={() => setCategory(item.id)}
+                className={`rounded-full px-4 py-3 text-xs font-extrabold uppercase tracking-[0.2em] transition ${
+                  category === item.id
+                    ? 'bg-[var(--ink-strong)] text-white'
+                    : 'border border-[var(--line)] bg-white/66 text-[var(--ink)] hover:border-[rgba(158,36,52,0.25)]'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-10">
+        {loading && products.length === 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="surface-solid h-[26rem] animate-pulse rounded-[1.7rem]" />
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard key={product._id} product={product} />
+              ))}
+            </div>
+
+            {!products.length && (
+              <div className="surface-solid mt-6 rounded-[1.8rem] px-6 py-14 text-center">
+                <p className="text-sm font-bold uppercase tracking-[0.24em] text-[var(--muted)]">No results</p>
+                <p className="mx-auto mt-4 max-w-xl text-base text-[var(--muted)]">
+                  Try another search term or remove a category filter to widen the catalogue.
+                </p>
+              </div>
+            )}
+          </>
         )}
-        {!hasMore && products.length > 0 && (
-          <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-300">End of Collection</p>
-        )}
-      </div>
+
+        <div ref={loaderRef} className="flex justify-center py-10">
+          {loading && products.length > 0 ? (
+            <div className="h-10 w-10 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+          ) : !hasMore && products.length > 0 ? (
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--muted)]">No more products in this view.</p>
+          ) : null}
+        </div>
+      </section>
     </main>
   );
 }
 
 export default function ProductsPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen">
       <Navbar />
-      <Suspense fallback={
-        <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden border border-slate-100 animate-pulse">
-                <div className="aspect-square bg-slate-200" />
-                <div className="p-3 space-y-2"><div className="h-3 bg-slate-200 rounded w-1/2" /><div className="h-4 bg-slate-200 rounded" /></div>
-              </div>
-            ))}
-          </div>
-        </main>
-      }>
+      <Suspense fallback={<main className="section-shell py-16" />}>
         <ProductsContent />
       </Suspense>
     </div>

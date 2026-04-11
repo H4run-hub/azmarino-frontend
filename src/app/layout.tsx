@@ -1,20 +1,64 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "../context/LanguageContext";
 
-const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "Azmarino — ኣዝማሪኖ | Global Shopping for the Eritrean Diaspora",
-  description: "Shop 1,184+ products with free delivery in Europe. The world's first e-commerce platform for the Eritrean diaspora.",
-  keywords: "Azmarino, Eritrean shopping, diaspora, ኣዝማሪኖ, Tigrinya",
+  metadataBase: new URL("https://www.azmarino.online"),
+  applicationName: "Azmarino",
+  title: {
+    default: "Azmarino | Premium Global Shopping for the Eritrean Diaspora",
+    template: "%s | Azmarino",
+  },
+  description:
+    "Azmarino is a premium global shopping experience built for the Eritrean diaspora, with secure payments, curated products, and delivery across Europe and beyond.",
+  keywords: [
+    "Azmarino",
+    "Eritrean diaspora shopping",
+    "global ecommerce",
+    "premium marketplace",
+    "Tigrinya shopping",
+    "diaspora marketplace",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Azmarino | Premium Global Shopping for the Eritrean Diaspora",
+    description:
+      "Discover curated fashion, beauty, and technology with secure checkout, multilingual support, and trusted delivery across Europe and beyond.",
+    url: "https://www.azmarino.online",
+    siteName: "Azmarino",
+    images: [
+      {
+        url: "/logo.jpg",
+        width: 1200,
+        height: 1200,
+        alt: "Azmarino",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Azmarino | Premium Global Shopping for the Eritrean Diaspora",
+    description:
+      "A calmer, premium online marketplace for curated products, secure payments, and trusted delivery.",
+    images: ["/logo.jpg"],
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: [{ url: "/favicon.png" }],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable} h-full`}>
-      <body className="min-h-full flex flex-col bg-white text-gray-900 antialiased">
+    <html lang="en" className="h-full">
+      <body className="min-h-full flex flex-col antialiased site-bg text-[var(--ink-strong)]">
         <LanguageProvider>
           {children}
         </LanguageProvider>

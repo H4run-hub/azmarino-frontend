@@ -1,91 +1,259 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Navbar from '../../components/Navbar';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
-const INPUT_CLS = "w-full border border-gray-200 rounded-none px-3 py-2.5 text-xs font-bold focus:outline-none focus:border-black focus:ring-1 focus:ring-black bg-white";
-const LABEL_CLS = "block text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 mb-1";
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
 
-export default function TrackOrderPage() {
+interface TrackedOrder {
+  _id: string;
+  orderNumber: string;
+  status: string;
+  total: number;
+  createdAt: string;
+  estimatedDelivery?: string;
+  trackingNumber?: string;
+  paymentStatus?: string;
+  shippingAddress?: {
+    fullName?: string;
+    city?: string;
+    country?: string;
+  };
+  items?: OrderItem[];
+}
+
+const formatPrice = (value: number) => `EUR ${value.toFixed(2)}`;
+
+const timeline = ['pending', 'processing', 'shipped', 'delivered'];
+
+function TrackOrderContent() {
+  const searchParams = useSearchParams();
   const [orderNumber, setOrderNumber] = useState('');
   const [email, setEmail] = useState('');
-  const [order, setOrder] = useState<any>(null);
+  const [order, setOrder] = useState<TrackedOrder | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true); setError(''); setOrder(null);
+  useEffect(() => {
+    const existingUser = localStorage.getItem('azmarino_user');
+    const prefilledOrder = searchParams.get('orderNumber');
+
+    if (prefilledOrder) {
+      setOrderNumber(prefilledOrder);
+    }
+
+    if (existingUser) {
+      try {
+        const parsed = JSON.parse(existingUser);
+        setEmail(parsed.email || '');
+      } catch {
+        // Ignore malformed local profile data.
+      }
+    }
+  }, [searchParams]);
+
+  const currentStep = useMemo(() => {
+    if (!order) {
+      return -1;
+    }
+    const index = timeline.indexOf(order.status);
+    return index >= 0 ? index : 1;
+  }, [order]);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    setOrder(null);
+
     try {
-      const res = await fetch(`${API_URL}/orders/track?orderNumber=${encodeURIComponent(orderNumber)}&email=${encodeURIComponent(email)}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Order not found');
-      setOrder(data.order);
-    } catch (err: any) { setError(err.message); } finally { setLoading(false); }
+      const response = await fetch(
+        `${API_URL}/orders/track?orderNumber=${encodeURIComponent(orderNumber)}&email=${encodeURIComponent(email)}`
+      );
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.message || 'Order not found.');
+      }
+
+      setOrder(payload.order || payload.data || null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Order not found.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
-      <Navbar />
-      <main className="flex-1 max-w-2xl mx-auto px-2 sm:px-4 lg:px-6 py-6 w-full">
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="text-xs font-black uppercase tracking-[0.3em] text-rose-600">Tracking</h1>
-          <h2 className="text-2xl font-black text-black uppercase tracking-tighter">Track Order</h2>
-          <div className="h-px flex-1 bg-gray-100" />
-        </div>
-        <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">Enter your order number and email to track delivery</p>
+    <main className="section-shell pb-16">
+      <section className="grid gap-8 xl:grid-cols-[minmax(0,1.05fr)_0.95fr]">
+        <div className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
+          <p className="eyebrow">Track delivery</p>
+          <h1 className="display-title mt-4 text-5xl text-[var(--ink-strong)] md:text-6xl">Follow your order from confirmation to doorstep.</h1>
+          <p className="soft-copy mt-4 max-w-2xl text-base">
+            Enter your order number and the email used at checkout to view the latest status, tracking details, and item summary.
+          </p>
 
-        <div className="bg-white border border-gray-100 p-4 mb-2">
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <label className={LABEL_CLS}>Order Number</label>
-              <input required value={orderNumber} onChange={e => setOrderNumber(e.target.value)}
-                className={INPUT_CLS} placeholder="AZ-123456" />
-            </div>
-            <div>
-              <label className={LABEL_CLS}>Email</label>
-              <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
-                className={INPUT_CLS} placeholder="you@example.com" />
-            </div>
-            {error && <div className="border border-rose-600 text-rose-600 text-[10px] font-black uppercase tracking-widest p-2">{error}</div>}
-            <button type="submit" disabled={loading} className="w-full bg-black hover:bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest py-3 rounded-none disabled:opacity-50 transition-colors">
-              {loading ? 'Tracking...' : 'Track Order'}
+          <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
+            <label className="block">
+              <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Order number</span>
+              <input
+                required
+                value={orderNumber}
+                onChange={(event) => setOrderNumber(event.target.value)}
+                placeholder="AZ-123456-ABCD"
+                className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Email</span>
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+              />
+            </label>
+
+            {error ? (
+              <div className="rounded-[1.3rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
+                {error}
+              </div>
+            ) : null}
+
+            <button type="submit" disabled={loading} className="button-primary mt-2 justify-center">
+              {loading ? 'Checking status...' : 'Track order'}
             </button>
           </form>
         </div>
 
-        {order && (
-          <div className="bg-white border border-gray-100 p-4">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">Order Number</p>
-                <p className="text-sm font-black text-black tracking-tight">{order.orderNumber}</p>
-              </div>
-              <span className="px-2 py-1 text-[9px] font-black uppercase tracking-widest text-rose-600 border border-rose-600">{order.status}</span>
+        <aside className="surface-solid rounded-[2rem] p-6 md:p-8">
+          <p className="eyebrow">What you will see</p>
+          <div className="mt-6 grid gap-4">
+            <div className="metric-card">
+              <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--muted)]">Live status</p>
+              <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">Confirmation, fulfilment, shipment, and final delivery updates.</p>
             </div>
-            {order.trackingNumber && (
-              <div className="bg-gray-50 border border-gray-100 p-3 mb-4">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 mb-1">Tracking Number</p>
-                <p className="text-xs font-black text-black tracking-tight">{order.trackingNumber}</p>
-              </div>
-            )}
-            <div className="space-y-1.5">
-              {order.items?.map((item: any, i: number) => (
-                <div key={i} className="flex justify-between text-[10px] font-bold">
-                  <span className="text-gray-700 truncate pr-2">{item.name} <span className="text-gray-400">x{item.quantity}</span></span>
-                  <span className="text-black font-black flex-shrink-0">€{(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
-              <div className="border-t border-gray-100 pt-2 flex justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-black">Total</span>
-                <span className="text-sm font-black text-black">€{order.total?.toFixed(2)}</span>
-              </div>
+            <div className="metric-card">
+              <p className="text-sm font-extrabold uppercase tracking-[0.16em] text-[var(--muted)]">Tracking details</p>
+              <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">Carrier reference, estimated arrival, and purchase summary.</p>
+            </div>
+            <div className="rounded-[1.6rem] border border-[rgba(176,134,74,0.3)] bg-[rgba(176,134,74,0.1)] p-5">
+              <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[var(--gold)]">Tip</p>
+              <p className="mt-3 text-sm leading-7 text-[var(--ink)]">
+                Sign in before placing your next order and we will keep the email field ready for faster tracking.
+              </p>
             </div>
           </div>
-        )}
-      </main>
+        </aside>
+      </section>
+
+      {order ? (
+        <section className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_21rem]">
+          <article className="surface-solid rounded-[2rem] p-6 md:p-8">
+            <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-6 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[var(--accent)]">Order {order.orderNumber}</p>
+                <h2 className="mt-3 text-3xl font-black text-[var(--ink-strong)]">Status: {order.status}</h2>
+                <p className="mt-3 text-sm text-[var(--muted)]">
+                  Placed on {new Date(order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                </p>
+              </div>
+
+              <div className="rounded-[1.5rem] border border-[var(--line)] bg-[rgba(255,255,255,0.72)] px-5 py-4">
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Payment</p>
+                <p className="mt-2 text-base font-bold capitalize text-[var(--ink-strong)]">{order.paymentStatus || 'pending'}</p>
+              </div>
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-4">
+              {timeline.map((step, index) => {
+                const active = currentStep >= index;
+                return (
+                  <div
+                    key={step}
+                    className={`rounded-[1.5rem] border px-4 py-5 ${
+                      active
+                        ? 'border-[rgba(158,36,52,0.22)] bg-[var(--accent-soft)]'
+                        : 'border-[var(--line)] bg-white'
+                    }`}
+                  >
+                    <p className="text-xs font-extrabold uppercase tracking-[0.16em] text-[var(--muted)]">Step {index + 1}</p>
+                    <p className="mt-3 text-sm font-black capitalize text-[var(--ink-strong)]">{step}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/70 p-5">
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Tracking number</p>
+                <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">{order.trackingNumber || 'Assigned once shipped'}</p>
+              </div>
+              <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/70 p-5">
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Estimated delivery</p>
+                <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">
+                  {order.estimatedDelivery
+                    ? new Date(order.estimatedDelivery).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+                    : 'We will add this once the carrier confirms dispatch'}
+                </p>
+              </div>
+            </div>
+
+            {order.shippingAddress ? (
+              <div className="mt-6 rounded-[1.6rem] border border-[var(--line)] bg-white/60 p-5">
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Shipping destination</p>
+                <p className="mt-3 text-sm font-semibold text-[var(--ink-strong)]">{order.shippingAddress.fullName || 'Recipient'}</p>
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  {[order.shippingAddress.city, order.shippingAddress.country].filter(Boolean).join(', ')}
+                </p>
+              </div>
+            ) : null}
+          </article>
+
+          <aside className="surface-panel h-fit rounded-[2rem] p-6 xl:sticky xl:top-28">
+            <p className="eyebrow">Purchase summary</p>
+            <div className="mt-5 space-y-4">
+              {order.items?.map((item, index) => (
+                <div key={`${item.name}-${index}`} className="flex items-start justify-between gap-4 border-b border-[var(--line)] pb-4">
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--ink-strong)]">{item.name}</p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Qty {item.quantity}</p>
+                  </div>
+                  <span className="text-sm font-bold text-[var(--ink-strong)]">{formatPrice(item.price * item.quantity)}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-5 border-t border-[var(--line)] pt-5">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Order total</span>
+                <span className="text-xl font-extrabold text-[var(--ink-strong)]">{formatPrice(order.total || 0)}</span>
+              </div>
+            </div>
+          </aside>
+        </section>
+      ) : null}
+    </main>
+  );
+}
+
+export default function TrackOrderPage() {
+  return (
+    <div className="min-h-screen">
+      <Navbar />
+      <Suspense fallback={<main className="section-shell py-16" />}>
+        <TrackOrderContent />
+      </Suspense>
     </div>
   );
 }

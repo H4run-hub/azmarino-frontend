@@ -1,59 +1,61 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Suspense, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
+
+interface StoredCartItem {
+  selected?: boolean;
+}
 
 function SuccessContent() {
   const params = useSearchParams();
   const orderId = params.get('order_id');
 
   useEffect(() => {
-    // Clear selected items from cart
-    try {
-      const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]');
-      const remaining = cart.filter((i: any) => i.selected === false);
-      localStorage.setItem('azmarino_cart', JSON.stringify(remaining));
-      window.dispatchEvent(new Event('cart-updated'));
-    } catch {}
+    const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]') as StoredCartItem[];
+    const remaining = cart.filter((item) => item.selected === false);
+    localStorage.setItem('azmarino_cart', JSON.stringify(remaining));
+    window.dispatchEvent(new Event('cart-updated'));
   }, []);
 
   return (
-    <>
-      <Navbar />
-      <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
-        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mb-6">
-          <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-          </svg>
-        </div>
-        <h1 className="text-3xl font-black text-slate-900 mb-2">Order Confirmed!</h1>
-        <p className="text-slate-500 mb-1">Thank you for shopping with Azmarino.</p>
-        <p className="text-slate-500 mb-6">A confirmation email has been sent to you.</p>
-        {orderId && (
-          <div className="bg-slate-50 rounded-xl px-6 py-3 mb-8">
-            <p className="text-xs text-slate-400 mb-1">Order ID</p>
-            <p className="font-mono font-bold text-slate-700 text-sm">{orderId}</p>
+    <main className="section-shell py-16">
+      <div className="surface-solid mx-auto max-w-3xl rounded-[2rem] px-6 py-14 text-center md:px-10">
+        <p className="eyebrow">Order confirmed</p>
+        <h1 className="display-title mt-4 text-5xl text-[var(--ink-strong)]">Thank you for shopping with Azmarino.</h1>
+        <p className="soft-copy mx-auto mt-4 max-w-xl text-base">
+          Your order is now in progress. A confirmation email has been sent, and tracking details will stay visible inside your account.
+        </p>
+
+        {orderId ? (
+          <div className="mx-auto mt-8 max-w-sm rounded-[1.4rem] border border-[var(--line)] bg-white/72 px-5 py-4">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[var(--accent)]">Order reference</p>
+            <p className="mt-2 text-sm font-bold text-[var(--ink-strong)]">{orderId}</p>
           </div>
-        )}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link href="/orders" className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-8 py-3 rounded-xl transition-colors">
-            View My Orders
+        ) : null}
+
+        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <Link href="/orders" className="button-primary">
+            View my orders
           </Link>
-          <Link href="/products" className="border-2 border-slate-200 text-slate-700 font-bold px-8 py-3 rounded-xl hover:border-rose-600 hover:text-rose-600 transition-colors">
-            Continue Shopping
+          <Link href="/products" className="button-secondary">
+            Continue shopping
           </Link>
         </div>
       </div>
-    </>
+    </main>
   );
 }
 
 export default function SuccessPage() {
   return (
-    <Suspense fallback={<Navbar />}>
-      <SuccessContent />
-    </Suspense>
+    <div className="min-h-screen">
+      <Navbar />
+      <Suspense fallback={<main className="section-shell py-16" />}>
+        <SuccessContent />
+      </Suspense>
+    </div>
   );
 }

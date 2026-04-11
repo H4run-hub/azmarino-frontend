@@ -5,10 +5,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/
 
 async function getProducts(params: string) {
   try {
-    const res = await fetch(`${API_URL}/products?${params}&limit=8`, { next: { revalidate: 300 } });
-    const data = await res.json();
+    const response = await fetch(`${API_URL}/products?${params}&limit=8`, {
+      next: { revalidate: 300 },
+    });
+
+    const data = await response.json();
     return data.products || data.data || [];
-  } catch { return []; }
+  } catch {
+    return [];
+  }
 }
 
 export default async function HomePage() {
@@ -18,7 +23,7 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       <Navbar />
       <HomeClient topRated={topRated} newArrivals={newArrivals} />
     </div>

@@ -1,148 +1,152 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import Navbar from '../../components/Navbar';
-import ProductCard from '../../components/ProductCard';
+import type { Product } from '../../lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
+interface CartItem {
+  id: string;
+  product: Product;
+  quantity: number;
+  selected?: boolean;
+  selectedSize?: string;
+  selectedColor?: string;
+}
 
-interface CartItem { id: string; product: any; quantity: number; selectedSize?: string; selectedColor?: string; selected: boolean; }
+const formatPrice = (value: number) => `EUR ${value.toFixed(2)}`;
 
 export default function CartPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [discover, setDiscover] = useState<any[]>([]);
-  const [discoverPage, setDiscoverPage] = useState(1);
-  const [discoverLoading, setDiscoverLoading] = useState(false);
-  const [hasMoreDiscover, setHasMoreDiscover] = useState(true);
-  const loader = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setCart(JSON.parse(localStorage.getItem('azmarino_cart') || '[]'));
-    const onUpdate = () => setCart(JSON.parse(localStorage.getItem('azmarino_cart') || '[]'));
-    window.addEventListener('cart-updated', onUpdate);
-    return () => window.removeEventListener('cart-updated', onUpdate);
+    const loadCart = () => {
+      const stored = JSON.parse(localStorage.getItem('azmarino_cart') || '[]') as CartItem[];
+      setCart(stored);
+    };
+    loadCart();
+    window.addEventListener('cart-updated', loadCart);
+    return () => window.removeEventListener('cart-updated', loadCart);
   }, []);
 
-  const fetchDiscover = async (nextPage: number) => {
-    if (discoverLoading || !hasMoreDiscover) return;
-    setDiscoverLoading(true);
-    try {
-      const res = await fetch(`${API_URL}/products?sort=-rating&page=${nextPage}&limit=12`);
-      const data = await res.json();
-      const items = data.products || data.data || [];
-      if (items.length === 0) { setHasMoreDiscover(false); }
-      else { setDiscover(prev => [...prev, ...items]); setDiscoverPage(nextPage); }
-    } catch { } finally { setDiscoverLoading(false); }
-  };
-
-  useEffect(() => { fetchDiscover(1); }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasMoreDiscover && !discoverLoading) {
-        fetchDiscover(discoverPage + 1);
-      }
-    }, { threshold: 0.1 });
-    if (loader.current) observer.observe(loader.current);
-    return () => observer.disconnect();
-  }, [loader, hasMoreDiscover, discoverLoading, discoverPage]);
-
-  const save = (updated: CartItem[]) => {
-    localStorage.setItem('azmarino_cart', JSON.stringify(updated));
+  const saveCart = (nextCart: CartItem[]) => {
+    localStorage.setItem('azmarino_cart', JSON.stringify(nextCart));
     window.dispatchEvent(new Event('cart-updated'));
-    setCart(updated);
+    setCart(nextCart);
   };
 
-  const updateQty = (id: string, delta: number) => {
-    const updated = cart.map(i => i.id === id ? { ...i, quantity: Math.max(1, i.quantity + delta) } : i);
-    save(updated);
+  const updateQuantity = (id: string, delta: number) => {
+    saveCart(
+      cart.map((item) => item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item)
+    );
   };
 
-  const remove = (id: string) => save(cart.filter(i => i.id !== id));
+  const removeItem = (id: string) => {
+    saveCart(cart.filter((item) => item.id !== id));
+  };
 
-  const total = cart.reduce((sum, i) => sum + (i.product?.price || 0) * i.quantity, 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+  const shipping = subtotal > 50 ? 0 : 4.99;
+  const total = subtotal + shipping;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen">
       <Navbar />
-      <main className="flex-1 max-w-5xl mx-auto px-2 sm:px-4 lg:px-6 py-6 w-full">
-        <div className="flex items-center gap-3 mb-6">
-          <h1 className="text-xs font-black uppercase tracking-[0.3em] text-rose-600">Bag</h1>
-          <h2 className="text-2xl font-black text-black uppercase tracking-tighter">Shopping Cart</h2>
-          <div className="h-px flex-1 bg-gray-100" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{cart.length} Items</span>
-        </div>
+      <main className="section-shell pb-16">
+        <section className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
+          <p className="eyebrow">Cart</p>
+          <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <h1 className="display-title text-5xl text-[var(--ink-strong)] md:text-6xl">Review your selections before checkout.</h1>
+              <p className="soft-copy mt-4 text-base">
+                Adjust quantities, confirm your chosen variants, and continue into a cleaner Stripe-backed payment flow.
+              </p>
+            </div>
+            <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/68 px-5 py-4 text-sm text-[var(--muted)]">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-[var(--accent)]">Items</p>
+              <p className="mt-2 font-semibold text-[var(--ink-strong)]">{cart.length} products selected</p>
+            </div>
+          </div>
+        </section>
 
         {cart.length === 0 ? (
-          <div className="border border-gray-100 py-20 flex flex-col items-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-6">Your bag is empty</p>
-            <Link href="/products" className="bg-black hover:bg-rose-600 text-white text-[10px] font-black uppercase tracking-widest px-8 py-3 rounded-none transition-colors">
-              Browse Collection
+          <section className="surface-solid mt-8 rounded-[2rem] px-6 py-16 text-center">
+            <p className="eyebrow">Cart empty</p>
+            <h2 className="display-title mt-4 text-4xl text-[var(--ink-strong)]">Your next favorite item is still waiting.</h2>
+            <p className="mx-auto mt-4 max-w-xl text-base text-[var(--muted)]">
+              Browse the catalogue to discover the latest premium fashion, beauty, and technology picks.
+            </p>
+            <Link href="/products" className="button-primary mt-8">
+              Browse the catalogue
             </Link>
-          </div>
+          </section>
         ) : (
-          <div className="flex flex-col lg:flex-row gap-1.5">
-            <div className="flex-1 space-y-1.5">
-              {cart.map(item => (
-                <div key={item.id} className="bg-white border border-gray-100 hover:border-black transition-colors p-1.5 flex gap-2">
-                  <div className="relative w-20 h-20 bg-gray-50 flex-shrink-0">
-                    <Image src={item.product?.image || '/placeholder.jpg'} alt={item.product?.name || ''} fill className="object-cover" unoptimized />
+          <section className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
+            <div className="space-y-4">
+              {cart.map((item) => (
+                <article key={item.id} className="surface-solid flex flex-col gap-5 rounded-[1.8rem] p-5 sm:flex-row sm:items-center">
+                  <div className="relative aspect-square w-full max-w-[8rem] overflow-hidden rounded-[1.4rem] bg-[linear-gradient(180deg,#f6efe5,#ebe1d1)]">
+                    <Image src={item.product?.image || '/logo.jpg'} alt={item.product?.name || 'Product'} fill className="object-cover" sizes="128px" />
                   </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-between py-0.5">
-                    <div>
-                      <h3 className="text-xs font-bold text-black line-clamp-2 leading-tight">{item.product?.name}</h3>
-                      <div className="flex gap-2 mt-0.5">
-                        {item.selectedSize && <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Size: {item.selectedSize}</span>}
-                        {item.selectedColor && <span className="text-[9px] font-black uppercase tracking-widest text-gray-400">Color: {item.selectedColor}</span>}
-                      </div>
+
+                  <div className="flex-1">
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.22em] text-[var(--muted)]">
+                      {(item.product?.category || 'collection').replace(/-/g, ' ')}
+                    </p>
+                    <h2 className="mt-2 text-lg font-semibold text-[var(--ink-strong)]">{item.product?.name}</h2>
+                    <div className="mt-3 flex flex-wrap gap-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+                      {item.selectedSize ? <span>Size {item.selectedSize}</span> : null}
+                      {item.selectedColor ? <span>Color {item.selectedColor}</span> : null}
                     </div>
-                    <p className="text-[13px] font-black text-black">€{item.product?.price?.toFixed(2)}</p>
                   </div>
-                  <div className="flex flex-col items-end justify-between py-0.5">
-                    <button onClick={() => remove(item.id)} className="text-gray-300 hover:text-rose-600 text-xs font-black transition-colors" title="Remove">✕</button>
-                    <div className="flex items-center border border-gray-200">
-                      <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 flex items-center justify-center text-black font-black hover:bg-black hover:text-white transition-colors">−</button>
-                      <span className="text-[11px] font-black w-6 text-center">{item.quantity}</span>
-                      <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 flex items-center justify-center text-black font-black hover:bg-black hover:text-white transition-colors">+</button>
+
+                  <div className="flex flex-col gap-4 sm:items-end">
+                    <p className="text-base font-extrabold text-[var(--ink-strong)]">{formatPrice(item.product?.price || 0)}</p>
+                    <div className="inline-flex items-center rounded-full border border-[var(--line)] bg-white/72">
+                      <button onClick={() => updateQuantity(item.id, -1)} className="px-4 py-3 text-sm font-bold">-</button>
+                      <span className="min-w-10 px-2 text-center text-sm font-extrabold">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="px-4 py-3 text-sm font-bold">+</button>
                     </div>
-                    <p className="text-[10px] font-black text-rose-600">€{((item.product?.price || 0) * item.quantity).toFixed(2)}</p>
+                    <button onClick={() => removeItem(item.id)} className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--accent)]">
+                      Remove
+                    </button>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
-            <div className="lg:w-72">
-              <div className="bg-white border border-gray-100 p-4 sticky top-16">
-                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-600 mb-3">Summary</h2>
-                <div className="space-y-1.5 mb-4">
-                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-700"><span>Subtotal</span><span className="text-black">€{total.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-700"><span>Delivery</span><span className="text-rose-600">Free</span></div>
-                  <div className="border-t border-gray-100 pt-2 flex justify-between"><span className="text-[10px] font-black uppercase tracking-widest text-black">Total</span><span className="text-base font-black text-black">€{total.toFixed(2)}</span></div>
+
+            <aside className="surface-panel h-fit rounded-[2rem] p-6 xl:sticky xl:top-28">
+              <p className="eyebrow">Summary</p>
+              <div className="mt-5 space-y-4 text-sm">
+                <div className="flex items-center justify-between text-[var(--muted)]">
+                  <span>Subtotal</span>
+                  <span className="font-semibold text-[var(--ink-strong)]">{formatPrice(subtotal)}</span>
                 </div>
-                <Link href="/checkout" className="block w-full bg-black hover:bg-rose-600 text-white text-center text-[10px] font-black uppercase tracking-widest py-3 rounded-none transition-colors">
-                  Checkout
+                <div className="flex items-center justify-between text-[var(--muted)]">
+                  <span>Shipping</span>
+                  <span className="font-semibold text-[var(--ink-strong)]">{shipping === 0 ? 'Included' : formatPrice(shipping)}</span>
+                </div>
+                <div className="border-t border-[var(--line)] pt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold uppercase tracking-[0.18em] text-[var(--muted)]">Total</span>
+                    <span className="text-xl font-extrabold text-[var(--ink-strong)]">{formatPrice(total)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <Link href="/checkout" className="button-primary w-full">
+                  Proceed to checkout
+                </Link>
+                <Link href="/products" className="button-secondary w-full">
+                  Continue shopping
                 </Link>
               </div>
-            </div>
-          </div>
+            </aside>
+          </section>
         )}
       </main>
-
-      {/* Discover More */}
-      <section className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-10 w-full">
-        <div className="flex items-center gap-4 mb-6">
-          <h2 className="text-xs font-black uppercase tracking-[0.3em] text-black whitespace-nowrap">Discover More</h2>
-          <div className="h-px flex-1 bg-gray-100" />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-1.5">
-          {discover.map((p: any) => <ProductCard key={p._id} product={p} />)}
-        </div>
-        <div ref={loader} className="py-8 flex justify-center">
-          {discoverLoading && <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-none animate-spin" />}
-          {!hasMoreDiscover && discover.length > 0 && <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-300">End of Collection</p>}
-        </div>
-      </section>
     </div>
   );
 }

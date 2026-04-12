@@ -1,68 +1,57 @@
 import type { Metadata } from "next";
+import { Geist } from "next/font/google";
 import "./globals.css";
-import { LanguageProvider } from "../context/LanguageContext";
-import SaraChat from "../components/SaraChat";
+import { LanguageProvider } from "../i18n/LanguageProvider";
+
+const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.azmarino.online"),
   applicationName: "Azmarino",
   title: {
-    default: "Azmarino | Premium Global E-commerce",
+    default: "Azmarino — Global Premium Shopping",
     template: "%s | Azmarino",
   },
   description:
-    "Discover curated global fashion, beauty, and technology with secure checkout and worldwide delivery.",
+    "Curated global fashion, elite electronics, and worldwide delivery. Premium e-commerce for the modern shopper.",
   keywords: [
     "Azmarino",
-    "global ecommerce",
+    "global premium shopping",
     "premium marketplace",
-    "luxury fashion",
-    "tech accessories",
+    "global fashion",
+    "electronics",
+    "accessories",
+    "multilingual shopping",
   ],
-  alternates: {
-    canonical: "/",
-  },
+  alternates: { canonical: "/" },
   openGraph: {
-    title: "Azmarino | Premium Global E-commerce",
+    title: "Azmarino — Global Premium Shopping",
     description:
-      "Curated global collection of fashion, beauty, and technology with secure worldwide shipping.",
+      "Curated global fashion, elite electronics, and worldwide delivery. Premium e-commerce for the modern shopper.",
     url: "https://www.azmarino.online",
     siteName: "Azmarino",
-    images: [
-      {
-        url: "/logo.jpg",
-        width: 1200,
-        height: 1200,
-        alt: "Azmarino",
-      },
-    ],
+    images: [{ url: "/logo.svg", width: 400, height: 300, alt: "Azmarino" }],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Azmarino | Premium Global E-commerce",
+    title: "Azmarino — Global Premium Shopping",
     description:
-      "Global collection of curated products with secure payments and trusted delivery.",
-    images: ["/logo.jpg"],
+      "Curated global fashion, elite electronics, and worldwide delivery.",
+    images: ["/logo.svg"],
   },
   icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/favicon.png", type: "image/png" },
-    ],
+    icon: [{ url: "/logo.svg", type: "image/svg+xml" }, { url: "/favicon.png", type: "image/png" }],
     apple: [{ url: "/favicon.png" }],
   },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col antialiased">
-        <LanguageProvider>
-          {children}
-          <SaraChat />
-        </LanguageProvider>
+    <html lang="en" className={`${geist.variable} h-full`}>
+      <body className="min-h-full flex flex-col bg-white text-gray-900 antialiased">
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );

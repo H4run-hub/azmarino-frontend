@@ -1,7 +1,7 @@
 import Navbar from '../components/Navbar';
 import HomeClient from './HomeClient';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://azmarino-backend-production.up.railway.app/api';
 
 async function getProducts(params: string) {
   try {

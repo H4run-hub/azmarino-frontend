@@ -7,7 +7,7 @@ import { useT } from '../i18n/LanguageProvider';
 import { BotIcon, ReturnIcon, ShieldIcon, ShipIcon } from '../components/Icons';
 import type { Product } from '../lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://azmarino-backend-production.up.railway.app/api';
 
 const CATEGORIES = [
   { id: 'women-clothing', key: 'women', img: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=800' },

@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://azmarino-backend-production.up.railway.app/api';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = typeof window !== 'undefined' ? localStorage.getItem('azmarino_token') : null;

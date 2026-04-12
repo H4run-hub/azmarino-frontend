@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { use, useEffect, useState } from 'react';
 import Navbar from '../../../components/Navbar';
 import ProductCard from '../../../components/ProductCard';
-import { useLang } from '../../../context/LanguageContext';
+import { useT } from '../../../i18n/LanguageProvider';
 import { StarIcon } from '../../../components/Icons';
 import type { Product } from '../../../lib/api';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://azmarino-backend-production.up.railway.app/api';
 
 interface Review {
   _id?: string;
@@ -21,7 +21,7 @@ interface Review {
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { t, lang } = useLang();
+  const { t, code: lang } = useT();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [recommended, setRecommended] = useState<Product[]>([]);
@@ -161,7 +161,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <main className="section-container py-10">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 label-caps mb-10 text-gray-400">
-          <Link href="/" className="hover:text-black transition-colors">{t('home') || 'Home'}</Link>
+          <Link href="/" className="hover:text-black transition-colors">Home</Link>
           <span>/</span>
           <Link href="/products" className="hover:text-black transition-colors">{t('shop')}</Link>
           <span>/</span>
@@ -170,20 +170,26 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
         <div className="grid lg:grid-cols-[1fr_450px] gap-12 xl:gap-20 items-start">
           
-          {/* Left: Gallery */}
-          <div className="space-y-4">
-            <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 group">
-              <Image src={currentImage} alt={displayName} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" priority />
+          {/* Left: Gallery - FIXED SIZING */}
+          <div className="space-y-4 w-full max-w-[700px] mx-auto lg:mx-0">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-gray-100 bg-gray-50 group shadow-sm">
+              <Image 
+                src={currentImage || '/logo.jpg'} 
+                alt={displayName} 
+                fill 
+                className="object-contain transition-transform duration-1000 group-hover:scale-105" 
+                priority 
+              />
               {discount > 0 && (
-                <span className="absolute top-4 left-4 bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5">
+                <span className="absolute top-6 left-6 bg-black text-white text-[12px] font-black uppercase tracking-[0.2em] px-4 py-2 rounded-lg">
                   -{discount}% OFF
                 </span>
               )}
             </div>
             {gallery.length > 1 && (
-              <div className="grid grid-cols-5 gap-3">
+              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
                 {gallery.map((img, i) => (
-                  <button key={i} onClick={() => setSelectedImage(i)} className={`relative aspect-square overflow-hidden rounded-lg border-2 transition-all ${selectedImage === i ? 'border-black' : 'border-transparent opacity-60 hover:opacity-100'}`}>
+                  <button key={i} onClick={() => setSelectedImage(i)} className={`relative flex-shrink-0 w-24 h-24 overflow-hidden rounded-2xl border-2 transition-all ${selectedImage === i ? 'border-black shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'}`}>
                     <Image src={img} alt="" fill className="object-cover" />
                   </button>
                 ))}

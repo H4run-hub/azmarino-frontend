@@ -6,6 +6,9 @@ import ProductCard from '../components/ProductCard';
 import { useT } from '../i18n/LanguageProvider';
 import { BotIcon, ReturnIcon, ShieldIcon, ShipIcon } from '../components/Icons';
 import type { Product } from '../lib/api';
+import dynamic from 'next/dynamic';
+
+const SaraAI = dynamic(() => import('../components/SaraAI'), { ssr: false });
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://azmarino-backend-production.up.railway.app/api';
 
@@ -16,6 +19,12 @@ const CATEGORIES = [
   { id: 'electronics', key: 'electronics', img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=800' },
   { id: 'accessories', key: 'accessories', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800' },
   { id: 'beauty', key: 'beauty', img: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=800' },
+  { id: 'watches', key: 'watches', img: 'https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&q=80&w=800' },
+  { id: 'jewelry', key: 'jewelry', img: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=800' },
+  { id: 'bags', key: 'bags', img: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=800' },
+  { id: 'home', key: 'home', img: 'https://images.unsplash.com/photo-1513506496266-aa6bc3b7184f?auto=format&fit=crop&q=80&w=800' },
+  { id: 'sports', key: 'sports', img: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&q=80&w=800' },
+  { id: 'toys', key: 'toys', img: 'https://images.unsplash.com/photo-1531346878377-a5be20888e57?auto=format&fit=crop&q=80&w=800' },
 ];
 
 const TRUST = [
@@ -37,7 +46,8 @@ export default function HomeClient({ topRated, newArrivals }: { topRated: Produc
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/products?page=${page + 1}&limit=12`);
+      // Prioritize products between 10 and 40
+      const res = await fetch(`${API_URL}/products?page=${page + 1}&limit=12&minPrice=10&maxPrice=40`);
       const data = await res.json();
       const incoming = data.products || data.data || [];
       if (incoming.length === 0) {
@@ -62,7 +72,8 @@ export default function HomeClient({ topRated, newArrivals }: { topRated: Produc
   }, [hasMore, page, loading]);
 
   return (
-    <div className="bg-white">
+    <div className="bg-white min-h-screen relative">
+      <SaraAI />
       {/* Hero Section */}
       <section className="relative h-[70vh] w-full overflow-hidden bg-black flex items-center">
         <div className="absolute inset-0 opacity-60">

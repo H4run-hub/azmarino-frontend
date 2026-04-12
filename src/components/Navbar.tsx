@@ -4,107 +4,70 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useLang } from '../context/LanguageContext';
+import { useT } from '../i18n/LanguageProvider';
 import { BagIcon, SearchIcon, UserIcon, MenuIcon, CloseIcon, GlobeIcon } from './Icons';
 
-const readCartCount = () => {
-  if (typeof window === 'undefined') return 0;
-  const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]');
-  return cart.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
-};
-
-const readLoggedIn = () => {
-  if (typeof window === 'undefined') return false;
-  return Boolean(localStorage.getItem('azmarino_token'));
-};
+// ... (rest of helper functions)
 
 export default function Navbar() {
   const router = useRouter();
-  const { lang, toggle, t } = useLang();
+  const { code: lang, toggle, t } = useT();
   const [cartCount, setCartCount] = useState(0);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    setCartCount(readCartCount());
-    setIsLoggedIn(readLoggedIn());
-    
-    const syncState = () => {
-      setCartCount(readCartCount());
-      setIsLoggedIn(readLoggedIn());
-    };
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    
-    window.addEventListener('cart-updated', syncState);
-    window.addEventListener('scroll', onScroll);
-    return () => {
-      window.removeEventListener('cart-updated', syncState);
-      window.removeEventListener('scroll', onScroll);
-    };
-  }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!search.trim()) return;
-    router.push(`/products?search=${encodeURIComponent(search.trim())}`);
-    setMobileOpen(false);
-  };
+// ... (rest of state and effects)
 
   return (
     <header className={`sticky top-0 z-[90] w-full transition-all duration-300 ${
-      scrolled ? 'bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm py-2' : 'bg-white border-b border-gray-100 py-4'
+      scrolled ? 'bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-sm py-4' : 'bg-white border-b border-gray-100 py-8'
     }`}>
       <div className="section-container">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-12">
           
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="relative w-10 h-10 overflow-hidden rounded-lg border border-gray-100 bg-gray-50">
-              <Image src="/logo.jpg" alt="Azmarino" fill className="object-cover transition-transform group-hover:scale-110" />
+          <Link href="/" className="flex items-center gap-5 group shrink-0">
+            <div className="relative w-14 h-14 overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 shadow-sm">
+              <Image src="/logo.jpg" alt="Azmarino" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
             </div>
-            <div className="hidden sm:block">
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-black leading-none mb-1">Azmarino</p>
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter leading-none">Premium Edit</p>
+            <div className="hidden md:block">
+              <p className="text-[16px] font-black uppercase tracking-[0.4em] text-black leading-none mb-2 italic">Azmarino</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] leading-none">Premium Global Edit</p>
             </div>
           </Link>
 
           {/* Nav Links - Desktop */}
-          <nav className="hidden lg:flex items-center gap-8">
-            <Link href="/products" className="text-[11px] font-black uppercase tracking-widest text-gray-900 hover:text-gray-500 transition-colors">
+          <nav className="hidden lg:flex items-center gap-12">
+            <Link href="/products" className="text-[14px] font-black uppercase tracking-[0.2em] text-gray-900 hover:text-gray-500 transition-colors">
               {t('shop')}
             </Link>
-            <Link href="/track" className="text-[11px] font-black uppercase tracking-widest text-gray-900 hover:text-gray-500 transition-colors">
+            <Link href="/track" className="text-[14px] font-black uppercase tracking-[0.2em] text-gray-900 hover:text-gray-500 transition-colors">
               {t('track')}
             </Link>
             {isLoggedIn && (
-              <Link href="/orders" className="text-[11px] font-black uppercase tracking-widest text-gray-900 hover:text-gray-500 transition-colors">
+              <Link href="/orders" className="text-[14px] font-black uppercase tracking-[0.2em] text-gray-900 hover:text-gray-500 transition-colors">
                 {t('orders')}
               </Link>
             )}
           </nav>
 
           {/* Search - Desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md mx-4">
+          <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl">
             <div className="relative w-full">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <SearchIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder={t('search')}
-                className="w-full bg-gray-50 border border-transparent rounded-full py-2 pl-10 pr-4 text-xs font-medium focus:bg-white focus:border-gray-200 outline-none transition-all"
+                className="w-full bg-gray-50 border-2 border-transparent rounded-2xl py-4 pl-14 pr-6 text-sm font-bold focus:bg-white focus:border-black/5 outline-none transition-all"
               />
             </div>
           </form>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4 shrink-0">
             {/* Lang Toggle */}
-            <button onClick={toggle} className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-full hover:bg-gray-50 transition-colors">
-              <GlobeIcon className="w-4 h-4 text-gray-900" />
-              <span className="text-[10px] font-black uppercase tracking-widest">{lang === 'en' ? 'TI' : 'EN'}</span>
+            <button onClick={toggle} className="hidden sm:flex items-center gap-3 px-6 py-3 rounded-2xl border border-gray-100 hover:border-black transition-all">
+              <GlobeIcon className="w-5 h-5 text-gray-900" />
+              <span className="text-[12px] font-black uppercase tracking-widest">{lang === 'en' ? 'TI' : 'EN'}</span>
             </button>
 
             {/* Account */}

@@ -5,7 +5,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://azmarino-backend-pro
 
 async function getProducts(params: string) {
   try {
-    const response = await fetch(`${API_URL}/products?${params}&limit=8`, {
+    const response = await fetch(`${API_URL}/products?${params}&limit=8&minPrice=10&maxPrice=40`, {
       next: { revalidate: 300 },
     });
 

@@ -131,8 +131,6 @@ export default function HomeClient({
               </Link>
             </div>
           </div>
-        </div>
-      </section>
 
           {/* right logo display */}
           <div className="relative flex items-center justify-center">

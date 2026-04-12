@@ -1,19 +1,24 @@
+'use client';
+
 import Navbar from '../components/Navbar';
+import { useLang } from '../context/LanguageContext';
 
 export default function Loading() {
+  const { t } = useLang();
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="section-shell py-16">
-        <section className="surface-panel rounded-[2rem] px-6 py-12 md:px-10">
-          <div className="h-4 w-28 animate-pulse rounded-full bg-[rgba(158,36,52,0.16)]" />
-          <div className="mt-6 h-12 max-w-3xl animate-pulse rounded-full bg-white/70" />
-          <div className="mt-4 h-5 max-w-2xl animate-pulse rounded-full bg-white/60" />
+      <main className="section-container py-12">
+        <section className="bg-gray-50 border border-gray-100 rounded-3xl px-6 py-12 md:px-10">
+          <p className="label-caps mb-4 text-gray-400 animate-pulse">{t('loadingEyebrow')}</p>
+          <div className="h-12 max-w-3xl bg-white/70 rounded-2xl animate-pulse mb-4" />
+          <div className="h-5 max-w-2xl bg-white/60 rounded-xl animate-pulse" />
         </section>
 
         <section className="mt-8 grid gap-6 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="surface-solid h-56 animate-pulse rounded-[1.8rem]" />
+            <div key={index} className="h-64 bg-gray-50 border border-gray-100 rounded-3xl animate-pulse" />
           ))}
         </section>
       </main>

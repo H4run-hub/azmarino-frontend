@@ -21,7 +21,7 @@ interface Review {
 
 export default function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { t } = useLang();
+  const { t, lang } = useLang();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [recommended, setRecommended] = useState<Product[]>([]);
@@ -31,6 +31,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariantId, setSelectedVariantId] = useState('');
   const [error, setError] = useState('');
   const [added, setAdded] = useState(false);
 
@@ -42,6 +43,10 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         const data = await res.json();
         const p = data.data || data;
         setProduct(p);
+        
+        if (p.cjVariants?.length) {
+          setSelectedVariantId(p.cjVariants[0].vid);
+        }
 
         const [revRes, recRes] = await Promise.all([
           fetch(`${API_URL}/reviews/product/${id}`),
@@ -64,6 +69,14 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   const addToCart = () => {
     if (!product) return;
+
+    const selectedVariant = product.cjVariants?.find(v => v.vid === selectedVariantId);
+
+    if (product.cjVariants?.length && !selectedVariantId) {
+      setError('Please select a style');
+      return;
+    }
+
     if (product.sizes?.length && !selectedSize) {
       setError('Please select a size');
       return;
@@ -74,11 +87,30 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
     }
 
     const cart = JSON.parse(localStorage.getItem('azmarino_cart') || '[]');
-    const itemId = `${product._id}|${selectedSize || 'none'}|${selectedColor || 'none'}`;
+    
+    // Create a unique ID for the cart item based on product, size, color and variant
+    const itemId = `${product._id}|${selectedSize || 'none'}|${selectedColor || 'none'}|${selectedVariantId || 'none'}`;
     const existing = cart.find((i: any) => i.id === itemId);
 
-    if (existing) existing.quantity += quantity;
-    else cart.push({ id: itemId, product, quantity, selectedSize, selectedColor, selected: true });
+    const productToSave = {
+      ...product,
+      price: selectedVariant?.price || product.price,
+      image: selectedVariant?.image || product.image,
+    };
+
+    if (existing) {
+      existing.quantity += quantity;
+    } else {
+      cart.push({ 
+        id: itemId, 
+        product: productToSave, 
+        quantity, 
+        selectedSize, 
+        selectedColor, 
+        variantName: selectedVariant?.name,
+        selected: true 
+      });
+    }
 
     localStorage.setItem('azmarino_cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cart-updated'));
@@ -114,7 +146,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   );
 
   const gallery = [product.image, ...(product.images || [])].filter(Boolean) as string[];
-  const discount = product.discount || (product.originalPrice && product.originalPrice > product.price ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0);
+  const selectedVariant = product.cjVariants?.find(v => v.vid === selectedVariantId);
+  const currentPrice = selectedVariant?.price || product.price;
+  const currentImage = selectedVariant?.image || gallery[selectedImage];
+  
+  const discount = product.discount || (product.originalPrice && product.originalPrice > currentPrice ? Math.round(((product.originalPrice - currentPrice) / product.originalPrice) * 100) : 0);
+  const displayName = lang === 'ti' && product.nameTi ? product.nameTi : product.name;
+  const displayDesc = lang === 'ti' && product.descriptionTi ? product.descriptionTi : product.description;
 
   return (
     <div className="min-h-screen bg-white">
@@ -123,9 +161,9 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       <main className="section-container py-10">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 label-caps mb-10 text-gray-400">
-          <Link href="/" className="hover:text-black transition-colors">Home</Link>
+          <Link href="/" className="hover:text-black transition-colors">{t('home') || 'Home'}</Link>
           <span>/</span>
-          <Link href="/products" className="hover:text-black transition-colors">Shop</Link>
+          <Link href="/products" className="hover:text-black transition-colors">{t('shop')}</Link>
           <span>/</span>
           <span className="text-black">{product.category?.replace(/-/g, ' ')}</span>
         </nav>
@@ -135,7 +173,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           {/* Left: Gallery */}
           <div className="space-y-4">
             <div className="relative aspect-[3/4] overflow-hidden rounded-2xl border border-gray-100 bg-gray-50 group">
-              <Image src={gallery[selectedImage]} alt={product.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" priority />
+              <Image src={currentImage} alt={displayName} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" priority />
               {discount > 0 && (
                 <span className="absolute top-4 left-4 bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5">
                   -{discount}% OFF
@@ -156,7 +194,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           {/* Right: Info */}
           <div className="flex flex-col">
             <p className="label-caps mb-2 text-gray-400">{product.brand || 'Azmarino Premium'}</p>
-            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-black leading-none mb-4">{product.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter text-black leading-none mb-4">{displayName}</h1>
             
             <div className="flex items-center gap-4 mb-8">
               <div className="flex items-center gap-1">
@@ -172,18 +210,37 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="flex items-baseline gap-3 mb-10 pb-8 border-b border-gray-100">
-              <span className="text-4xl font-black tracking-tighter text-black">€{product.price.toFixed(2)}</span>
-              {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-4xl font-black tracking-tighter text-black">€{currentPrice.toFixed(2)}</span>
+              {product.originalPrice && product.originalPrice > currentPrice && (
                 <span className="text-lg font-bold text-gray-300 line-through">€{product.originalPrice.toFixed(2)}</span>
               )}
             </div>
+
+            {/* CJ Variants */}
+            {product.cjVariants && product.cjVariants.length > 0 && (
+              <div className="mb-8">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-4">Select Style / Variant</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {product.cjVariants.map(v => (
+                    <button 
+                      key={v.vid} 
+                      onClick={() => setSelectedVariantId(v.vid)}
+                      className={`p-3 text-[10px] font-bold border transition-all text-left flex flex-col gap-1 ${selectedVariantId === v.vid ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-200 hover:border-black'}`}
+                    >
+                      <span className="uppercase tracking-tight line-clamp-1">{v.name}</span>
+                      <span className={selectedVariantId === v.vid ? 'text-gray-400' : 'text-gray-500'}>€{v.price.toFixed(2)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Variants: Size */}
             {product.sizes && product.sizes.length > 0 && (
               <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
                   <p className="text-[10px] font-black uppercase tracking-widest text-black">{t('selectSize')}</p>
-                  <button className="text-[9px] font-black uppercase tracking-widest text-gray-400 underline hover:text-black">Size Guide</button>
+                  <button className="text-[9px] font-black uppercase tracking-widest text-gray-400 underline hover:text-black">{t('sizeGuide') || 'Size Guide'}</button>
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {product.sizes.map(size => (
@@ -240,11 +297,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
                 <p className="text-[10px] font-black uppercase tracking-widest text-black mb-1">{t('trustDelivery')}</p>
-                <p className="text-[10px] font-medium text-gray-500 leading-tight">Worldwide express shipping with full tracking capabilities.</p>
+                <p className="text-[10px] font-medium text-gray-500 leading-tight">{t('trustDeliverySub')}</p>
               </div>
               <div className="p-4 bg-gray-50 border border-gray-100 rounded-xl">
                 <p className="text-[10px] font-black uppercase tracking-widest text-black mb-1">{t('trustPayment')}</p>
-                <p className="text-[10px] font-medium text-gray-500 leading-tight">100% secure checkout powered by industry-leading Stripe.</p>
+                <p className="text-[10px] font-medium text-gray-500 leading-tight">{t('trustPaymentSub')}</p>
               </div>
             </div>
           </div>
@@ -255,7 +312,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           <div>
             <h2 className="heading-lg mb-8">{t('description')}</h2>
             <div className="text-sm text-gray-500 font-medium leading-relaxed space-y-4">
-              <p>{product.description || 'This premium item has been meticulously curated for the Azmarino global collection. Quality, durability, and contemporary style are guaranteed.'}</p>
+              <p>{displayDesc || t('defaultDescription') || 'This premium item has been meticulously curated for the Azmarino global collection. Quality, durability, and contemporary style are guaranteed.'}</p>
             </div>
           </div>
           <div>
@@ -274,7 +331,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                   <p className="text-xs text-gray-500 font-medium leading-relaxed italic">"{rev.comment || 'Exceeded my expectations. The quality is phenomenal.'}"</p>
                 </div>
               )) : (
-                <p className="text-xs font-bold text-gray-300 uppercase tracking-[0.2em] italic">No reviews yet for this collection piece.</p>
+                <p className="text-xs font-bold text-gray-300 uppercase tracking-[0.2em] italic">{t('noReviews') || 'No reviews yet for this collection piece.'}</p>
               )}
             </div>
           </div>

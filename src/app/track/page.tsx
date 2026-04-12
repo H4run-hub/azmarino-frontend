@@ -92,7 +92,7 @@ function TrackOrderContent() {
     <main className="section-container py-12">
       <header className="mb-12 border-b border-gray-100 pb-8">
         <p className="label-caps mb-2 text-gray-400">{t('track')}</p>
-        <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">Logistics Tracking</h1>
+        <h1 className="text-4xl md:text-5xl font-black uppercase tracking-tighter text-black">{t('trackingTitle')}</h1>
       </header>
 
       <div className="grid lg:grid-cols-[1fr_400px] gap-12 items-start">
@@ -101,7 +101,7 @@ function TrackOrderContent() {
         <div className="space-y-12">
           <form onSubmit={handleSubmit} className="p-8 border border-gray-100 rounded-3xl bg-white shadow-sm space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Order Number</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('orderNumber')}</label>
               <input
                 required
                 value={orderNumber}
@@ -111,7 +111,7 @@ function TrackOrderContent() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">Email Address</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('email')}</label>
               <input
                 required
                 type="email"
@@ -123,7 +123,7 @@ function TrackOrderContent() {
             </div>
             {error && <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest text-center">{error}</p>}
             <button type="submit" disabled={loading} className="btn-black w-full h-14">
-              {loading ? 'Locating...' : 'Search Order'}
+              {loading ? t('locating') : t('searchOrder')}
             </button>
           </form>
 
@@ -132,11 +132,11 @@ function TrackOrderContent() {
             <div className="p-8 border border-gray-100 rounded-3xl bg-gray-50/50 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex justify-between items-start mb-10 pb-6 border-b border-gray-200">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Status</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{t('status')}</p>
                   <h3 className="text-2xl font-black uppercase tracking-tight text-black">{order.status}</h3>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Created</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{t('created')}</p>
                   <p className="text-sm font-bold text-black">{new Date(order.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
@@ -161,11 +161,11 @@ function TrackOrderContent() {
 
               <div className="grid grid-cols-2 gap-8">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Tracking ID</p>
-                  <p className="text-xs font-black text-black">{order.trackingNumber || 'Pending Assignment'}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">{t('trackingId')}</p>
+                  <p className="text-xs font-black text-black">{order.trackingNumber || t('pendingAssignment')}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Value</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">{t('totalValue')}</p>
                   <p className="text-xs font-black text-black">€{order.total.toFixed(2)}</p>
                 </div>
               </div>
@@ -176,18 +176,18 @@ function TrackOrderContent() {
         {/* Sidebar Info */}
         <aside className="space-y-6">
           <div className="p-8 border border-gray-100 rounded-3xl bg-black text-white">
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] mb-6">Tracking Support</h2>
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] mb-6">{t('trackingSupport')}</h2>
             <p className="text-xs text-gray-400 font-medium leading-relaxed mb-8">
-              Orders are typically processed within 48 hours. Once shipped, you will receive an email with your official carrier tracking number.
+              {t('trackingDesc')}
             </p>
             <div className="space-y-4">
                <div className="flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Real-time status updates</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{t('realTimeUpdates')}</span>
                </div>
                <div className="flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Full item breakdown</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest">{t('itemBreakdown')}</span>
                </div>
             </div>
           </div>

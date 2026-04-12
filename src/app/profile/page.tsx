@@ -281,263 +281,263 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="section-shell pb-16">
-        <section className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
+      <main className="section-container py-12">
+        <section className="bg-gray-50 border border-gray-100 rounded-3xl px-6 py-8 md:px-10 md:py-10">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <p className="eyebrow">Profile studio</p>
-              <h1 className="display-title mt-4 text-5xl text-[var(--ink-strong)] md:text-6xl">Keep your account, delivery details, and security settings impeccably current.</h1>
-              <p className="soft-copy mt-4 max-w-2xl text-base">
-                Manage the essentials that make checkout faster, order updates clearer, and account recovery safer.
+              <p className="label-caps mb-4 text-gray-400">{t('profileStudio')}</p>
+              <h1 className="heading-lg text-black">{t('profileTitle')}</h1>
+              <p className="text-sm text-gray-500 font-medium mt-4 max-w-2xl leading-relaxed">
+                {t('profileSubtitle')}
               </p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="metric-card min-w-40">
-                <p className="metric-value">{accountCompletion}%</p>
-                <p className="metric-label">Profile complete</p>
+              <div className="bg-white border border-gray-100 p-6 rounded-2xl min-w-40 shadow-sm text-center">
+                <p className="text-3xl font-black text-black">{accountCompletion}%</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1">{t('profileComplete')}</p>
               </div>
-              <div className="metric-card min-w-40">
-                <p className="metric-value">{user.emailVerified ? 'Yes' : 'No'}</p>
-                <p className="metric-label">Email verified</p>
+              <div className="bg-white border border-gray-100 p-6 rounded-2xl min-w-40 shadow-sm text-center">
+                <p className="text-xl font-black text-black">{user.emailVerified ? t('verified') : t('actionNeeded')}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-2">{t('emailVerified')}</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1fr)_21rem]">
+        <section className="mt-8 grid gap-8 xl:grid-cols-[1fr_320px]">
           <div className="space-y-8">
-            <form onSubmit={handleProfileSave} className="surface-solid rounded-[2rem] p-6 md:p-8">
-              <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-6 md:flex-row md:items-center md:justify-between">
+            <form onSubmit={handleProfileSave} className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 shadow-sm">
+              <div className="flex flex-col gap-4 border-b border-gray-100 pb-6 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="eyebrow">Account details</p>
-                  <h2 className="mt-3 text-3xl font-black text-[var(--ink-strong)]">Personal information</h2>
+                  <p className="label-caps mb-1 text-gray-400">{t('accountDetails')}</p>
+                  <h2 className="text-2xl font-black text-black uppercase tracking-tight">{t('personalInfo')}</h2>
                 </div>
-                <Link href="/orders" className="button-secondary">
-                  View orders
+                <Link href="/orders" className="btn-outline h-10 px-6 text-[10px]">
+                  {t('viewOrders')}
                 </Link>
               </div>
 
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <label className="block md:col-span-2">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Full name</span>
+                  <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('fullNameLabel')}</span>
                   <input
                     value={profile.name}
                     onChange={(event) => setProfile((current) => ({ ...current, name: event.target.value }))}
                     required
-                    className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                    className="input-base"
                   />
                 </label>
 
                 <label className="block">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Email</span>
+                  <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('email')}</span>
                   <input
                     value={user.email}
                     disabled
-                    className="w-full rounded-[1.2rem] border border-[var(--line)] bg-[rgba(255,255,255,0.6)] px-4 py-4 text-sm text-[var(--muted)]"
+                    className="input-base bg-gray-50 text-gray-400"
                   />
                 </label>
 
                 <label className="block">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Phone</span>
+                  <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('phoneLabel')}</span>
                   <input
                     value={profile.phone}
                     onChange={(event) => setProfile((current) => ({ ...current, phone: event.target.value }))}
-                    className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                    className="input-base"
                     placeholder="+352 000 000 000"
                   />
                 </label>
               </div>
 
-              <div className="mt-6 border-t border-[var(--line)] pt-6">
-                <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[var(--muted)]">Delivery address</p>
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <div className="mt-8 border-t border-gray-100 pt-8">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-6">{t('deliveryAddress')}</p>
+                <div className="grid gap-4 md:grid-cols-2">
                   <label className="block md:col-span-2">
-                    <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Street address</span>
+                    <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('streetAddress')}</span>
                     <input
                       value={profile.street}
                       onChange={(event) => setProfile((current) => ({ ...current, street: event.target.value }))}
-                      className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                      className="input-base"
                     />
                   </label>
 
                   <label className="block">
-                    <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">City</span>
+                    <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('city')}</span>
                     <input
                       value={profile.city}
                       onChange={(event) => setProfile((current) => ({ ...current, city: event.target.value }))}
-                      className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                      className="input-base"
                     />
                   </label>
 
                   <label className="block">
-                    <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Postal code</span>
+                    <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('postalCode')}</span>
                     <input
                       value={profile.postalCode}
                       onChange={(event) => setProfile((current) => ({ ...current, postalCode: event.target.value }))}
-                      className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                      className="input-base"
                     />
                   </label>
 
                   <label className="block md:col-span-2">
-                    <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Country</span>
+                    <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('country')}</span>
                     <input
                       value={profile.country}
                       onChange={(event) => setProfile((current) => ({ ...current, country: event.target.value }))}
-                      className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                      className="input-base"
                     />
                   </label>
                 </div>
               </div>
 
               {profileError ? (
-                <div className="mt-6 rounded-[1.3rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
+                <div className="mt-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold uppercase tracking-widest rounded-xl text-center">
                   {profileError}
                 </div>
               ) : null}
 
               {profileMessage ? (
-                <div className="mt-6 rounded-[1.3rem] border border-[rgba(176,134,74,0.25)] bg-[rgba(176,134,74,0.12)] px-4 py-3 text-sm text-[var(--ink)]">
+                <div className="mt-6 p-4 bg-green-50 border border-green-100 text-green-600 text-[10px] font-bold uppercase tracking-widest rounded-xl text-center">
                   {profileMessage}
                 </div>
               ) : null}
 
-              <button type="submit" disabled={savingProfile} className="button-primary mt-6">
-                {savingProfile ? 'Saving changes...' : 'Save profile'}
+              <button type="submit" disabled={savingProfile} className="btn-black mt-8 w-full md:w-auto px-12">
+                {savingProfile ? t('savingChanges') : t('saveProfile')}
               </button>
             </form>
 
-            <form onSubmit={handlePasswordSave} className="surface-solid rounded-[2rem] p-6 md:p-8">
-              <p className="eyebrow">Security</p>
-              <h2 className="mt-3 text-3xl font-black text-[var(--ink-strong)]">Change password</h2>
-              <div className="mt-6 grid gap-4">
+            <form onSubmit={handlePasswordSave} className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 shadow-sm">
+              <p className="label-caps mb-1 text-gray-400">{t('security')}</p>
+              <h2 className="text-2xl font-black text-black uppercase tracking-tight mb-6">{t('changePassword')}</h2>
+              <div className="grid gap-4">
                 <label className="block">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Current password</span>
+                  <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('currentPassword')}</span>
                   <input
                     type="password"
                     value={passwords.currentPassword}
                     onChange={(event) => setPasswords((current) => ({ ...current, currentPassword: event.target.value }))}
                     required
-                    className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                    className="input-base"
                   />
                 </label>
 
                 <label className="block">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">New password</span>
+                  <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('newPasswordLabel')}</span>
                   <input
                     type="password"
                     value={passwords.newPassword}
                     onChange={(event) => setPasswords((current) => ({ ...current, newPassword: event.target.value }))}
                     required
                     minLength={6}
-                    className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                    className="input-base"
                   />
                 </label>
 
                 <label className="block">
-                  <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Confirm new password</span>
+                  <span className="mb-2 block text-[10px] font-black uppercase tracking-widest text-gray-400">{t('confirmPasswordLabel')}</span>
                   <input
                     type="password"
                     value={passwords.confirmPassword}
                     onChange={(event) => setPasswords((current) => ({ ...current, confirmPassword: event.target.value }))}
                     required
                     minLength={6}
-                    className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                    className="input-base"
                   />
                 </label>
               </div>
 
               {passwordError ? (
-                <div className="mt-6 rounded-[1.3rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
+                <div className="mt-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold uppercase tracking-widest rounded-xl text-center">
                   {passwordError}
                 </div>
               ) : null}
 
               {passwordMessage ? (
-                <div className="mt-6 rounded-[1.3rem] border border-[rgba(176,134,74,0.25)] bg-[rgba(176,134,74,0.12)] px-4 py-3 text-sm text-[var(--ink)]">
+                <div className="mt-6 p-4 bg-green-50 border border-green-100 text-green-600 text-[10px] font-bold uppercase tracking-widest rounded-xl text-center">
                   {passwordMessage}
                 </div>
               ) : null}
 
-              <button type="submit" disabled={savingPassword} className="button-primary mt-6">
-                {savingPassword ? 'Updating password...' : 'Update password'}
+              <button type="submit" disabled={savingPassword} className="btn-black mt-8 w-full md:w-auto px-12">
+                {savingPassword ? t('updatingPassword') : t('updatePassword')}
               </button>
             </form>
           </div>
 
           <aside className="space-y-6">
-            <div className="surface-panel rounded-[2rem] p-6">
-              <p className="eyebrow">Account status</p>
-              <div className="mt-5 grid gap-4">
-                <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/70 p-5">
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Member role</p>
-                  <p className="mt-3 text-xl font-black capitalize text-[var(--ink-strong)]">{user.role}</p>
+            <div className="bg-gray-50 border border-gray-100 rounded-3xl p-6 shadow-sm">
+              <p className="label-caps mb-4 text-gray-400">{t('accountStatus')}</p>
+              <div className="space-y-4">
+                <div className="bg-white border border-gray-100 rounded-2xl p-5">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">{t('memberRole')}</p>
+                  <p className="mt-2 text-lg font-black capitalize text-black">{user.role}</p>
                 </div>
-                <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/70 p-5">
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Email verification</p>
-                  <p className="mt-3 text-xl font-black text-[var(--ink-strong)]">
-                    {user.emailVerified ? 'Verified' : 'Action needed'}
+                <div className="bg-white border border-gray-100 rounded-2xl p-5">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-gray-400">{t('emailVerified')}</p>
+                  <p className={`mt-2 text-lg font-black ${user.emailVerified ? 'text-green-600' : 'text-rose-600'}`}>
+                    {user.emailVerified ? t('verified') : t('actionNeeded')}
                   </p>
                 </div>
               </div>
 
               {!user.emailVerified ? (
-                <form onSubmit={handleVerifyEmail} className="mt-6 border-t border-[var(--line)] pt-6">
-                  <p className="text-sm font-semibold text-[var(--ink-strong)]">Enter your verification code</p>
+                <form onSubmit={handleVerifyEmail} className="mt-6 border-t border-gray-200 pt-6">
+                  <p className="text-xs font-black uppercase tracking-widest text-black mb-4">{t('enterCode')}</p>
                   <input
                     value={verificationCode}
                     onChange={(event) => setVerificationCode(event.target.value)}
                     required
-                    placeholder="6-digit code"
-                    className="mt-4 w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                    placeholder={t('digitCode')}
+                    className="input-base"
                   />
 
                   {verificationError ? (
-                    <div className="mt-4 rounded-[1.3rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
+                    <div className="mt-4 p-3 bg-rose-50 border border-rose-100 text-rose-600 text-[9px] font-bold uppercase tracking-widest rounded-xl text-center">
                       {verificationError}
                     </div>
                   ) : null}
 
                   {verificationMessage ? (
-                    <div className="mt-4 rounded-[1.3rem] border border-[rgba(176,134,74,0.25)] bg-[rgba(176,134,74,0.12)] px-4 py-3 text-sm text-[var(--ink)]">
+                    <div className="mt-4 p-3 bg-green-50 border border-green-100 text-green-600 text-[9px] font-bold uppercase tracking-widest rounded-xl text-center">
                       {verificationMessage}
                     </div>
                   ) : null}
 
-                  <div className="mt-5 grid gap-3">
-                    <button type="submit" disabled={verifyingEmail} className="button-primary w-full justify-center">
-                      {verifyingEmail ? 'Verifying...' : 'Verify email'}
+                  <div className="mt-6 grid gap-3">
+                    <button type="submit" disabled={verifyingEmail} className="btn-black w-full h-12 text-[10px]">
+                      {verifyingEmail ? t('verifying') : t('verifyEmail')}
                     </button>
                     <button
                       type="button"
                       onClick={handleResendVerification}
                       disabled={sendingVerification}
-                      className="button-secondary w-full justify-center"
+                      className="btn-outline w-full h-12 text-[10px] border-gray-200"
                     >
-                      {sendingVerification ? 'Sending code...' : 'Resend code'}
+                      {sendingVerification ? t('sendingCode') : t('resendCode')}
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="mt-6 rounded-[1.6rem] border border-[rgba(176,134,74,0.24)] bg-[rgba(176,134,74,0.12)] p-5">
-                  <p className="text-sm font-semibold text-[var(--ink-strong)]">Your email is verified and ready for order updates.</p>
+                <div className="mt-6 p-5 bg-green-50/50 border border-green-100 rounded-2xl">
+                  <p className="text-[10px] font-medium text-green-800 leading-relaxed italic">{t('emailVerifiedMsg')}</p>
                 </div>
               )}
             </div>
 
-            <div className="surface-solid rounded-[2rem] p-6">
-              <p className="eyebrow">Quick actions</p>
-              <div className="mt-5 grid gap-3">
-                <Link href="/orders" className="button-secondary w-full justify-center">
-                  Review orders
+            <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+              <p className="label-caps mb-4 text-gray-400">{t('quickActions')}</p>
+              <div className="grid gap-3">
+                <Link href="/orders" className="btn-outline w-full h-12 text-[10px] border-gray-200">
+                  {t('reviewOrders')}
                 </Link>
-                <Link href="/track" className="button-secondary w-full justify-center">
-                  Track a package
+                <Link href="/track" className="btn-outline w-full h-12 text-[10px] border-gray-200">
+                  {t('trackPackage')}
                 </Link>
-                <button onClick={handleLogout} className="button-primary w-full justify-center">
-                  Sign out
+                <button onClick={handleLogout} className="btn-black w-full h-12 text-[10px]">
+                  {t('signOut')}
                 </button>
               </div>
             </div>

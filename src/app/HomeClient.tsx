@@ -186,7 +186,7 @@ export default function HomeClient({ topRated, newArrivals }: { topRated: Produc
               <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" />
             ) : !hasMore ? (
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300 italic">
-                The end of the collection.
+                {t('endOfCollection')}
               </p>
             ) : null}
           </div>
@@ -205,27 +205,27 @@ export default function HomeClient({ topRated, newArrivals }: { topRated: Produc
                 <p className="text-xl font-black uppercase tracking-tighter italic">Azmarino</p>
               </div>
               <p className="text-gray-400 text-sm leading-relaxed font-medium">
-                Azmarino is a premier global e-commerce destination for curated high-end fashion, electronics, and lifestyle products. Designed for the modern discerning shopper.
+                {t('footerDesc')}
               </p>
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
               <div className="flex flex-col gap-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Navigation</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{t('navigation')}</p>
                 <Link href="/products" className="text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-gray-400">{t('shop')}</Link>
                 <Link href="/track" className="text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-gray-400">{t('track')}</Link>
                 <Link href="/orders" className="text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-gray-400">{t('orders')}</Link>
               </div>
               <div className="flex flex-col gap-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Support</p>
-                <a href="mailto:support@azmarino.online" className="text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-gray-400">Email</a>
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-400 cursor-default">Help Center</span>
-                <span className="text-xs font-bold uppercase tracking-widest text-gray-400 cursor-default">Returns</span>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">{t('support')}</p>
+                <a href="mailto:support@azmarino.online" className="text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-gray-400">{t('email')}</a>
+                <span className="text-xs font-bold uppercase tracking-widest text-gray-400 cursor-default">{t('helpCenter')}</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-gray-400 cursor-default">{t('returns')}</span>
               </div>
             </div>
           </div>
           <div className="mt-20 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20">© {new Date().getFullYear()} Azmarino Premium Global. ALL RIGHTS RESERVED.</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20">© {new Date().getFullYear()} Azmarino Premium Global. {t('allRightsReserved')}</p>
             <div className="flex gap-6 opacity-30 grayscale invert brightness-0">
                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-3" />
                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-5" />

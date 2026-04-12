@@ -28,7 +28,7 @@ function ProductsContent() {
   const [hasMore, setHasMore] = useState(true);
 
   const CATEGORIES = [
-    { id: '', label: 'All' },
+    { id: '', label: t('all') },
     { id: 'women-clothing', label: t('categories.women') },
     { id: 'men-clothing', label: t('categories.men') },
     { id: 'shoes', label: t('categories.shoes') },
@@ -43,11 +43,11 @@ function ProductsContent() {
   }, [initialCategory, initialSearch]);
 
   const activeLabel = useMemo(() => {
-    if (featured) return 'Featured Collection';
+    if (featured) return t('featuredCollection');
     if (newArrival) return t('newArrivals');
     if (category) return category.replace(/-/g, ' ').toUpperCase();
     if (search) return `"${search}"`;
-    return 'All Collection';
+    return t('allCollection');
   }, [category, featured, newArrival, search, t]);
 
   const fetchProducts = useCallback(async (reset = false, nextPage = 1) => {
@@ -153,8 +153,8 @@ function ProductsContent() {
           </div>
         ) : (
           <div className="py-40 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-300 italic mb-4">No pieces matching your search</p>
-            <button onClick={() => {setSearch(''); setCategory('');}} className="btn-black inline-flex">Clear Filters</button>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-gray-300 italic mb-4">{t('noResults')}</p>
+            <button onClick={() => {setSearch(''); setCategory('');}} className="btn-black inline-flex">{t('clearFilters')}</button>
           </div>
         )}
 
@@ -163,7 +163,7 @@ function ProductsContent() {
             <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin" />
           )}
           {!hasMore && products.length > 0 && (
-            <p className="text-[10px] font-black uppercase tracking-widest text-gray-300 italic">EndOfCollection</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-300 italic">{t('endOfCollection')}</p>
           )}
         </div>
       </section>

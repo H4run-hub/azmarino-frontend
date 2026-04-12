@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Navbar from '../../../components/Navbar';
+import { useLang } from '../../../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
@@ -23,6 +24,7 @@ const initialForm: RegisterForm = {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useLang();
   const [form, setForm] = useState<RegisterForm>(initialForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -55,98 +57,97 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="section-shell pb-16">
-        <section className="grid gap-8 xl:grid-cols-[1.02fr_0.98fr]">
-          <div className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
-            <p className="eyebrow">Create membership</p>
-            <h1 className="display-title mt-4 text-5xl text-[var(--ink-strong)] md:text-6xl">Start with an account that feels as considered as the storefront itself.</h1>
-            <p className="soft-copy mt-4 max-w-2xl text-base">
-              Create your Azmarino profile to save delivery details, verify your email, and keep your order history beautifully organized from the first purchase onward.
+      <main className="section-container py-12">
+        <section className="grid gap-8 lg:grid-cols-[1fr_450px]">
+          <div className="bg-gray-50 border border-gray-100 rounded-3xl px-6 py-8 md:px-10 md:py-10 flex flex-col justify-center">
+            <p className="label-caps mb-4 text-gray-400">{t('createMembership')}</p>
+            <h1 className="heading-lg text-black mb-6">{t('registerTitle')}</h1>
+            <p className="text-sm text-gray-500 font-medium max-w-2xl leading-relaxed mb-12">
+              {t('registerSubtitle')}
             </p>
 
-            <div className="mt-8 grid gap-4">
-              <div className="metric-card">
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Verification ready</p>
-                <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">New accounts receive an email verification code so order updates stay secure and reliable.</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-3">{t('verificationReady')}</p>
+                <p className="text-[11px] font-medium text-gray-500 leading-relaxed">{t('verificationReadyDesc')}</p>
               </div>
-              <div className="metric-card">
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Checkout ready</p>
-                <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">Once registered, your profile can flow straight into checkout and delivery tracking.</p>
+              <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-3">{t('checkoutReady')}</p>
+                <p className="text-[11px] font-medium text-gray-500 leading-relaxed">{t('checkoutReadyDesc')}</p>
               </div>
             </div>
           </div>
 
-          <div className="surface-solid rounded-[2rem] p-6 md:p-8">
-            <p className="eyebrow">Registration</p>
-            <h2 className="mt-3 text-3xl font-black text-[var(--ink-strong)]">Create your account</h2>
-            <p className="mt-3 text-sm leading-7 text-[var(--muted)]">A few essentials are all we need to prepare your profile and send your verification code.</p>
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-10 shadow-sm flex flex-col justify-center">
+            <p className="label-caps mb-2 text-gray-400">{t('registration')}</p>
+            <h2 className="text-3xl font-black text-black uppercase tracking-tighter mb-4">{t('createAccount')}</h2>
+            <p className="text-[11px] font-medium text-gray-400 uppercase tracking-tight mb-10 leading-relaxed">{t('registerEmailDesc')}</p>
 
-            <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
-              <label className="block">
-                <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Full name</span>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('fullNameLabel')}</span>
                 <input
                   required
                   value={form.name}
                   onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
                   placeholder="Your full name"
-                  className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                  className="input-base"
                 />
-              </label>
+              </div>
 
-              <label className="block">
-                <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Email</span>
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('email')}</span>
                 <input
                   required
                   type="email"
                   value={form.email}
                   onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
                   placeholder="you@example.com"
-                  className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                  className="input-base"
                 />
-              </label>
+              </div>
 
-              <label className="block">
-                <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Phone</span>
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('phoneLabel')}</span>
                 <input
                   value={form.phone}
                   onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
                   placeholder="+352 000 000 000"
-                  className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                  className="input-base"
                 />
-              </label>
+              </div>
 
-              <label className="block">
-                <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Password</span>
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('password')}</span>
                 <input
                   required
                   type="password"
                   minLength={6}
                   value={form.password}
                   onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-                  placeholder="Choose a secure password"
-                  className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                  placeholder="••••••••"
+                  className="input-base"
                 />
-              </label>
+              </div>
 
-              {error ? (
-                <div className="rounded-[1.3rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
+              {error && (
+                <div className="p-4 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold uppercase tracking-widest rounded-xl text-center">
                   {error}
                 </div>
-              ) : null}
+              )}
 
-              <button type="submit" disabled={loading} className="button-primary mt-2 justify-center">
-                {loading ? 'Creating your account...' : 'Create account'}
+              <button type="submit" disabled={loading} className="btn-black w-full h-14 text-xs">
+                {loading ? t('creatingAccount') : t('createAccount')}
               </button>
             </form>
 
-            <p className="mt-8 text-sm text-[var(--muted)]">
-              Already have an account?{' '}
-              <Link href="/auth/login" className="font-bold text-[var(--accent)] transition hover:text-[var(--accent-strong)]">
-                Sign in instead
-              </Link>
-            </p>
+            <div className="mt-12 pt-8 border-t border-gray-100 text-center">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                {t('alreadyHaveAccount')} <Link href="/auth/login" className="text-black hover:underline ml-2">{t('signInInstead')}</Link>
+              </p>
+            </div>
           </div>
         </section>
       </main>

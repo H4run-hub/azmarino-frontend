@@ -4,11 +4,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Navbar from '../../../components/Navbar';
+import { useLang } from '../../../context/LanguageContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLang();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ export default function LoginPage() {
       });
       const payload = await response.json();
       if (!response.ok) {
-        throw new Error(payload.message || 'Login failed.');
+        throw new Error(payload.message || t('loginError') || 'Login failed.');
       }
 
       localStorage.setItem('azmarino_token', payload.token);
@@ -37,7 +39,7 @@ export default function LoginPage() {
       window.dispatchEvent(new Event('cart-updated'));
       router.push('/');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed.');
+      setError(err instanceof Error ? err.message : (t('loginError') || 'Login failed.'));
     } finally {
       setLoading(false);
     }
@@ -45,7 +47,7 @@ export default function LoginPage() {
 
   const handleResetRequest = async () => {
     if (!email) {
-      setError('Enter your email above before requesting a reset link.');
+      setError(t('enterEmailReset'));
       return;
     }
 
@@ -73,86 +75,85 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="section-shell pb-16">
-        <section className="grid gap-8 xl:grid-cols-[0.95fr_minmax(0,1.05fr)]">
-          <div className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
-            <p className="eyebrow">Member sign in</p>
-            <h1 className="display-title mt-4 text-5xl text-[var(--ink-strong)] md:text-6xl">Return to a calmer, more premium shopping experience.</h1>
-            <p className="soft-copy mt-4 max-w-2xl text-base">
-              Sign in to continue checkout, review previous orders, and keep delivery tracking tied to your account.
+      <main className="section-container py-12">
+        <section className="grid gap-8 lg:grid-cols-[1fr_450px]">
+          <div className="bg-gray-50 border border-gray-100 rounded-3xl px-6 py-8 md:px-10 md:py-10 flex flex-col justify-center">
+            <p className="label-caps mb-4 text-gray-400">{t('memberSignIn')}</p>
+            <h1 className="heading-lg text-black mb-6">{t('loginTitle')}</h1>
+            <p className="text-sm text-gray-500 font-medium max-w-2xl leading-relaxed mb-12">
+              {t('loginSubtitle')}
             </p>
 
-            <div className="mt-8 grid gap-4">
-              <div className="metric-card">
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Fast checkout</p>
-                <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">Your saved details flow straight into order creation and Stripe checkout.</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-3">{t('fastCheckout')}</p>
+                <p className="text-[11px] font-medium text-gray-500 leading-relaxed">{t('fastCheckoutDesc')}</p>
               </div>
-              <div className="metric-card">
-                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Order visibility</p>
-                <p className="mt-3 text-lg font-bold text-[var(--ink-strong)]">Track status, payment progress, and delivery information from one account hub.</p>
+              <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-black mb-3">{t('orderVisibility')}</p>
+                <p className="text-[11px] font-medium text-gray-500 leading-relaxed">{t('orderVisibilityDesc')}</p>
               </div>
             </div>
           </div>
 
-          <div className="surface-solid rounded-[2rem] p-6 md:p-8">
-            <p className="eyebrow">Secure access</p>
-            <h2 className="mt-3 text-3xl font-black text-[var(--ink-strong)]">Sign in to Azmarino</h2>
-            <p className="mt-3 text-sm leading-7 text-[var(--muted)]">Use the email address linked to your orders to keep tracking and account settings in sync.</p>
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 md:p-10 shadow-sm flex flex-col justify-center">
+            <p className="label-caps mb-2 text-gray-400">{t('secureAccess')}</p>
+            <h2 className="text-3xl font-black text-black uppercase tracking-tighter mb-4">{t('signInToAzmarino')}</h2>
+            <p className="text-[11px] font-medium text-gray-400 uppercase tracking-tight mb-10 leading-relaxed">{t('loginEmailDesc')}</p>
 
-            <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
-              <label className="block">
-                <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Email</span>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('email')}</span>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="you@example.com"
-                  className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                  className="input-base"
                 />
-              </label>
+              </div>
 
-              <label className="block">
-                <span className="mb-2 block text-xs font-extrabold uppercase tracking-[0.18em] text-[var(--muted)]">Password</span>
+              <div className="space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{t('password')}</span>
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Enter your password"
-                  className="w-full rounded-[1.2rem] border border-[var(--line)] bg-white px-4 py-4 text-sm outline-none transition focus:border-[var(--accent)]"
+                  placeholder="••••••••"
+                  className="input-base"
                 />
-              </label>
+              </div>
 
-              {error ? (
-                <div className="rounded-[1.3rem] border border-[rgba(158,36,52,0.2)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--accent)]">
+              {error && (
+                <div className="p-4 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold uppercase tracking-widest rounded-xl text-center">
                   {error}
                 </div>
-              ) : null}
+              )}
 
-              {resetMessage ? (
-                <div className="rounded-[1.3rem] border border-[rgba(176,134,74,0.25)] bg-[rgba(176,134,74,0.12)] px-4 py-3 text-sm text-[var(--ink)]">
+              {resetMessage && (
+                <div className="p-4 bg-green-50 border border-green-100 text-green-600 text-[10px] font-bold uppercase tracking-widest rounded-xl text-center">
                   {resetMessage}
                 </div>
-              ) : null}
+              )}
 
-              <button type="submit" disabled={loading} className="button-primary mt-2 justify-center">
-                {loading ? 'Signing in...' : 'Sign in'}
+              <button type="submit" disabled={loading} className="btn-black w-full h-14 text-xs">
+                {loading ? t('signingIn') : t('signIn')}
               </button>
             </form>
 
-            <button onClick={handleResetRequest} disabled={resetRequested} className="mt-4 text-sm font-semibold text-[var(--accent)] transition hover:text-[var(--accent-strong)]">
-              {resetRequested ? 'Requesting reset link...' : 'Forgot your password? Request reset instructions'}
+            <button onClick={handleResetRequest} disabled={resetRequested} className="mt-6 text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-black transition-colors text-center">
+              {resetRequested ? t('requestingReset') : t('forgotPassword')}
             </button>
 
-            <p className="mt-8 text-sm text-[var(--muted)]">
-              New to Azmarino?{' '}
-              <Link href="/auth/register" className="font-bold text-[var(--accent)] transition hover:text-[var(--accent-strong)]">
-                Create your account
-              </Link>
-            </p>
+            <div className="mt-12 pt-8 border-t border-gray-100 text-center">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                {t('newToAzmarino')} <Link href="/auth/register" className="text-black hover:underline ml-2">{t('createAccount')}</Link>
+              </p>
+            </div>
           </div>
         </section>
       </main>

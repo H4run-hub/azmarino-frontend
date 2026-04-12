@@ -13,6 +13,7 @@ interface Props {
 const formatPrice = (price: number) => `€${price.toFixed(2)}`;
 
 export default function ProductCard({ product }: Props) {
+  const { lang, t } = useLang();
   const [hover, setHover] = useState(false);
 
   const images = [product.image, ...(product.images || [])].filter(Boolean) as string[];
@@ -21,6 +22,8 @@ export default function ProductCard({ product }: Props) {
       ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
       : 0
   );
+
+  const displayName = lang === 'ti' && product.nameTi ? product.nameTi : product.name;
 
   return (
     <Link
@@ -32,7 +35,7 @@ export default function ProductCard({ product }: Props) {
       <div className="relative aspect-[3/4] overflow-hidden bg-gray-50 border border-gray-100 rounded-xl">
         <Image
           src={(hover && images[1]) ? images[1] : images[0] || '/logo.jpg'}
-          alt={product.name}
+          alt={displayName}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className="object-cover transition-all duration-700 group-hover:scale-105"
@@ -47,7 +50,7 @@ export default function ProductCard({ product }: Props) {
           )}
           {product.newArrival && (
             <span className="bg-white text-black text-[8px] font-black uppercase tracking-widest px-2 py-1 border border-gray-100">
-              New
+              {t('new')}
             </span>
           )}
         </div>
@@ -55,7 +58,7 @@ export default function ProductCard({ product }: Props) {
         {/* Quick View / Hover Action */}
         <div className={`absolute inset-x-0 bottom-0 p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-300`}>
            <div className="btn-black w-full text-[8px] h-10 py-0">
-              View Details
+              {t('viewDetails') || 'View Details'}
            </div>
         </div>
       </div>
@@ -63,7 +66,7 @@ export default function ProductCard({ product }: Props) {
       <div className="mt-3 space-y-1 px-1">
         <div className="flex justify-between items-start gap-2">
           <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-tight line-clamp-1 flex-1">
-            {product.name}
+            {displayName}
           </h3>
           {product.rating && (
             <div className="flex items-center gap-0.5">

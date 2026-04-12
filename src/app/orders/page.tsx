@@ -36,6 +36,7 @@ const statusTone: Record<string, string> = {
 
 export default function OrdersPage() {
   const router = useRouter();
+  const { t } = useLang();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -54,20 +55,20 @@ export default function OrdersPage() {
         });
         const payload = await response.json();
         if (!response.ok) {
-          throw new Error(payload.message || 'Could not load your orders.');
+          throw new Error(payload.message || t('ordersError'));
         }
 
         const nextOrders = payload.orders || payload.data || [];
         setOrders(Array.isArray(nextOrders) ? nextOrders : []);
       } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Could not load your orders.');
+        setError(err instanceof Error ? err.message : t('ordersError'));
       } finally {
         setLoading(false);
       }
     };
 
     loadOrders();
-  }, [router]);
+  }, [router, t]);
 
   const totalSpent = useMemo(
     () => orders.reduce((sum, order) => sum + (order.total || 0), 0),
@@ -75,26 +76,26 @@ export default function OrdersPage() {
   );
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <Navbar />
-      <main className="section-shell pb-16">
-        <section className="surface-panel rounded-[2rem] px-6 py-8 md:px-10 md:py-10">
-          <p className="eyebrow">Order archive</p>
+      <main className="section-container py-12">
+        <section className="bg-gray-50 border border-gray-100 rounded-3xl px-6 py-8 md:px-10 md:py-10">
+          <p className="label-caps mb-4 text-gray-400">{t('orderArchive')}</p>
           <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <h1 className="display-title text-5xl text-[var(--ink-strong)] md:text-6xl">Every order, delivery update, and receipt in one polished place.</h1>
-              <p className="soft-copy mt-4 max-w-2xl text-base">
-                Review your recent purchases, track fulfilment status, and jump back into the catalog whenever you are ready for the next order.
+              <h1 className="heading-lg text-black">{t('ordersTitle')}</h1>
+              <p className="text-sm text-gray-500 font-medium mt-4 max-w-2xl leading-relaxed">
+                {t('ordersSubtitle')}
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="metric-card min-w-40">
-                <p className="metric-value">{orders.length}</p>
-                <p className="metric-label">Orders placed</p>
+              <div className="bg-white border border-gray-100 p-6 rounded-2xl min-w-40 shadow-sm">
+                <p className="text-3xl font-black text-black">{orders.length}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-1">{t('ordersPlaced')}</p>
               </div>
-              <div className="metric-card min-w-40">
-                <p className="metric-value">{formatPrice(totalSpent)}</p>
-                <p className="metric-label">Total spend</p>
+              <div className="bg-white border border-gray-100 p-6 rounded-2xl min-w-40 shadow-sm">
+                <p className="text-2xl font-black text-black leading-none">{formatPrice(totalSpent)}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-2">{t('totalSpend')}</p>
               </div>
             </div>
           </div>
@@ -103,81 +104,81 @@ export default function OrdersPage() {
         {loading ? (
           <section className="mt-8 grid gap-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="surface-solid h-44 animate-pulse rounded-[2rem]" />
+              <div key={index} className="h-44 bg-gray-50 rounded-3xl animate-pulse" />
             ))}
           </section>
         ) : error ? (
-          <section className="mt-8 surface-solid rounded-[2rem] px-6 py-10">
-            <p className="eyebrow">Something went wrong</p>
-            <h2 className="mt-4 text-2xl font-black text-[var(--ink-strong)]">We could not load your orders.</h2>
-            <p className="mt-3 max-w-xl text-sm text-[var(--muted)]">{error}</p>
+          <section className="mt-8 bg-white border border-gray-100 rounded-3xl px-6 py-10 text-center shadow-sm">
+            <p className="label-caps text-rose-600 mb-4">Error</p>
+            <h2 className="text-2xl font-black text-black">{t('ordersError')}</h2>
+            <p className="mt-3 max-w-xl mx-auto text-sm text-gray-500">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="button-primary mt-6"
+              className="btn-black mt-6 inline-flex"
             >
               Try again
             </button>
           </section>
         ) : orders.length === 0 ? (
-          <section className="mt-8 surface-solid rounded-[2rem] px-6 py-14 text-center">
-            <p className="eyebrow">No history yet</p>
-            <h2 className="display-title mt-4 text-4xl text-[var(--ink-strong)]">Your order gallery is still empty.</h2>
-            <p className="soft-copy mx-auto mt-4 max-w-xl text-base">
-              Once you place your first order, the full timeline and payment status will appear here automatically.
+          <section className="mt-8 bg-white border border-gray-100 rounded-3xl px-6 py-14 text-center shadow-sm">
+            <p className="label-caps text-gray-400 mb-4">{t('noHistory')}</p>
+            <h2 className="heading-lg text-black">{t('emptyOrders')}</h2>
+            <p className="text-sm text-gray-500 font-medium mx-auto mt-4 max-w-xl">
+              {t('firstOrder')}
             </p>
-            <Link href="/products" className="button-primary mt-8">
-              Discover products
+            <Link href="/products" className="btn-black mt-8 inline-flex">
+              {t('discoverProducts')}
             </Link>
           </section>
         ) : (
           <section className="mt-8 grid gap-6">
             {orders.map((order) => (
-              <article key={order._id} className="surface-solid rounded-[2rem] p-6 md:p-8">
-                <div className="flex flex-col gap-4 border-b border-[var(--line)] pb-5 md:flex-row md:items-start md:justify-between">
+              <article key={order._id} className="bg-white border border-gray-100 rounded-3xl p-6 md:p-8 shadow-sm hover:border-gray-200 transition-all">
+                <div className="flex flex-col gap-4 border-b border-gray-100 pb-5 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[var(--accent)]">Order {order.orderNumber}</p>
-                    <p className="mt-3 text-sm text-[var(--muted)]">
-                      Placed on {new Date(order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                    <p className="text-[10px] font-black uppercase tracking-widest text-black">{t('order')} #{order.orderNumber}</p>
+                    <p className="mt-2 text-xs font-bold text-gray-400 uppercase tracking-tight">
+                      {t('placedOn')} {new Date(order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                     {order.trackingNumber ? (
-                      <p className="mt-2 text-sm text-[var(--muted)]">Tracking number: <span className="font-semibold text-[var(--ink-strong)]">{order.trackingNumber}</span></p>
+                      <p className="mt-2 text-xs font-bold text-gray-400 uppercase tracking-tight">{t('trackingNumber')}: <span className="font-black text-black">{order.trackingNumber}</span></p>
                     ) : null}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.16em] ${statusTone[order.status] || 'bg-[var(--accent-soft)] text-[var(--accent)]'}`}>
+                    <span className={`rounded-full px-4 py-1.5 text-[10px] font-black uppercase tracking-widest ${statusTone[order.status] || 'bg-gray-100 text-gray-600'}`}>
                       {order.status}
                     </span>
                     {order.paymentStatus ? (
-                      <span className="rounded-full border border-[var(--line)] bg-white px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
-                        Payment {order.paymentStatus}
+                      <span className="rounded-full border border-gray-100 bg-white px-4 py-1.5 text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        {t('payment')} {order.paymentStatus}
                       </span>
                     ) : null}
                   </div>
                 </div>
 
-                <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_14rem]">
+                <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_280px]">
                   <div className="space-y-4">
                     {order.items?.map((item, index) => (
-                      <div key={`${order._id}-${index}`} className="flex items-center justify-between gap-4 rounded-[1.4rem] border border-[var(--line)] bg-white/70 px-4 py-4">
+                      <div key={`${order._id}-${index}`} className="flex items-center justify-between gap-4 rounded-2xl border border-gray-100 bg-gray-50/50 px-4 py-4">
                         <div>
-                          <p className="text-sm font-bold text-[var(--ink-strong)]">{item.name}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[var(--muted)]">Quantity {item.quantity}</p>
+                          <p className="text-sm font-black uppercase tracking-tight text-black leading-tight">{item.name}</p>
+                          <p className="mt-1 text-[10px] font-bold text-gray-400 uppercase">{t('qty')} {item.quantity}</p>
                         </div>
-                        <span className="text-sm font-extrabold text-[var(--ink-strong)]">{formatPrice(item.price * item.quantity)}</span>
+                        <span className="text-sm font-black text-black">{formatPrice(item.price * item.quantity)}</span>
                       </div>
                     ))}
                   </div>
 
-                  <div className="rounded-[1.6rem] border border-[var(--line)] bg-[rgba(255,255,255,0.74)] p-5">
-                    <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[var(--muted)]">Order total</p>
-                    <p className="mt-3 text-3xl font-black text-[var(--ink-strong)]">{formatPrice(order.total || 0)}</p>
-                    <div className="mt-6 grid gap-3">
-                      <Link href={`/track?orderNumber=${encodeURIComponent(order.orderNumber)}`} className="button-secondary w-full justify-center">
-                        Track order
+                  <div className="rounded-2xl border border-gray-100 bg-gray-50/50 p-6 flex flex-col">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">{t('orderTotal')}</p>
+                    <p className="text-3xl font-black text-black tracking-tighter">{formatPrice(order.total || 0)}</p>
+                    <div className="mt-auto pt-6 grid gap-3">
+                      <Link href={`/track?orderNumber=${encodeURIComponent(order.orderNumber)}`} className="btn-outline h-12 text-[10px] border-gray-200">
+                        {t('trackOrder')}
                       </Link>
-                      <Link href="/products" className="button-primary w-full justify-center">
-                        Shop again
+                      <Link href="/products" className="btn-black h-12 text-[10px]">
+                        {t('shopAgain')}
                       </Link>
                     </div>
                   </div>

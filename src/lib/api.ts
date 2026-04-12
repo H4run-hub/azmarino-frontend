@@ -25,7 +25,9 @@ export const api = {
 export interface Product {
   _id: string;
   name: string;
+  nameTi?: string;
   description?: string;
+  descriptionTi?: string;
   price: number;
   originalPrice?: number;
   discount?: number;
@@ -40,6 +42,15 @@ export interface Product {
   featured?: boolean;
   newArrival?: boolean;
   bestseller?: boolean;
+  brand?: string;
+  cjVariants?: {
+    vid: string;
+    name: string;
+    price: number;
+    image?: string;
+    sku?: string;
+    stock?: number;
+  }[];
 }
 
 export interface CartItem {
@@ -48,6 +59,7 @@ export interface CartItem {
   quantity: number;
   selectedSize?: string;
   selectedColor?: string;
+  variantName?: string;
 }
 
 export interface User {

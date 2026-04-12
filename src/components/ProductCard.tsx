@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { useLang } from '../context/LanguageContext';
 import { StarIcon } from './Icons';
 import type { Product } from '../lib/api';
 

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
+import { useLang } from '../../../context/LanguageContext';
 
 interface StoredCartItem {
   selected?: boolean;

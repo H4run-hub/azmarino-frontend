@@ -1,66 +1,52 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import ProductCard from '../components/ProductCard';
-import { ShipIcon, ShieldIcon, ReturnIcon, BotIcon } from '../components/Icons';
 import { useT } from '../i18n/LanguageProvider';
+import { BotIcon, ReturnIcon, ShieldIcon, ShipIcon } from '../components/Icons';
 import type { Product } from '../lib/api';
 
-const CATEGORIES = [
-  { id: 'women-clothing', key: 'cat.women', tone: 'from-rose-500 to-rose-700' },
-  { id: 'men-clothing', key: 'cat.men', tone: 'from-zinc-700 to-black' },
-  { id: 'shoes', key: 'cat.shoes', tone: 'from-amber-500 to-rose-600' },
-  { id: 'electronics', key: 'cat.electronics', tone: 'from-sky-600 to-indigo-900' },
-  { id: 'accessories', key: 'cat.accessories', tone: 'from-emerald-600 to-teal-900' },
-  { id: 'beauty', key: 'cat.beauty', tone: 'from-fuchsia-500 to-rose-700' },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
 
-const STATS = [
-  { value: '85+', key: 'stats.countries' },
-  { value: '12K+', key: 'stats.products' },
-  { value: '250K+', key: 'stats.customers' },
-  { value: '4.9★', key: 'stats.rating' },
+const CATEGORIES = [
+  { id: 'women-clothing', key: 'women', img: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&q=80&w=800' },
+  { id: 'men-clothing', key: 'men', img: 'https://images.unsplash.com/photo-1490578474895-6a9c96883ce4?auto=format&fit=crop&q=80&w=800' },
+  { id: 'shoes', key: 'shoes', img: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&q=80&w=800' },
+  { id: 'electronics', key: 'electronics', img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=800' },
+  { id: 'accessories', key: 'accessories', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800' },
+  { id: 'beauty', key: 'beauty', img: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&q=80&w=800' },
 ];
 
 const TRUST = [
-  { Icon: ShipIcon, key: 'trust.delivery' },
-  { Icon: ShieldIcon, key: 'trust.secure' },
-  { Icon: ReturnIcon, key: 'trust.returns' },
-  { Icon: BotIcon, key: 'trust.support' },
+  { Icon: ShipIcon, key: 'trustDelivery' },
+  { Icon: ShieldIcon, key: 'trustPayment' },
+  { Icon: ReturnIcon, key: 'trustReturns' },
+  { Icon: BotIcon, key: 'trustAI' },
 ];
 
-export default function HomeClient({
-  topRated,
-  newArrivals,
-}: {
-  topRated: Product[];
-  newArrivals: Product[];
-}) {
+export default function HomeClient({ topRated, newArrivals }: { topRated: Product[]; newArrivals: Product[] }) {
   const { t } = useT();
   const [products, setProducts] = useState<Product[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
-  const loader = useRef<HTMLDivElement>(null);
+  const loaderRef = useRef<HTMLDivElement>(null);
 
   const fetchMore = async () => {
     if (loading || !hasMore) return;
     setLoading(true);
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api'}/products?page=${page + 1}&limit=12`,
-      );
+      const res = await fetch(`${API_URL}/products?page=${page + 1}&limit=12`);
       const data = await res.json();
-      const newItems = data.products || data.data || [];
-      if (newItems.length === 0) {
+      const incoming = data.products || data.data || [];
+      if (incoming.length === 0) {
         setHasMore(false);
       } else {
-        setProducts((prev) => [...prev, ...newItems]);
-        setPage((p) => p + 1);
+        setProducts(prev => [...prev, ...incoming]);
+        setPage(p => p + 1);
       }
-    } catch (err) {
-      console.error('Failed to fetch more products:', err);
+    } catch {
       setHasMore(false);
     } finally {
       setLoading(false);
@@ -68,166 +54,75 @@ export default function HomeClient({
   };
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore) fetchMore();
-      },
-      { threshold: 0.1 },
-    );
-    const el = loader.current;
-    if (el) observer.observe(el);
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0]?.isIntersecting && hasMore) fetchMore();
+    }, { threshold: 0.1 });
+    if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, page, loading]);
 
   return (
     <div className="bg-white">
-      {/* HERO */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#7f0f0f] via-[#b91c1c] to-[#450a0a] text-white">
-        {/* starfield */}
-        <div
-          className="absolute inset-0 opacity-[0.08] pointer-events-none"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-            backgroundSize: '28px 28px',
-          }}
-        />
-        {/* glowing halos */}
-        <div className="absolute -top-20 -left-20 w-[420px] h-[420px] bg-rose-400/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -right-20 w-[520px] h-[520px] bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-24 grid md:grid-cols-2 gap-12 items-center">
-          {/* left copy */}
-          <div className="relative text-center md:text-start">
-            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-3 py-1.5 mb-6 backdrop-blur-sm">
-              <span className="w-1.5 h-1.5 bg-rose-300 rounded-none animate-pulse" />
-              <span className="text-[10px] font-black uppercase tracking-[0.3em]">{t('hero.eyebrow')}</span>
-            </div>
-
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black leading-[0.9] tracking-tighter mb-6">
-              <span className="block">{t('hero.title1')}</span>
-              <span className="block text-rose-200">{t('hero.title2')}</span>
-              <span className="block italic font-serif bg-gradient-to-r from-amber-200 to-rose-100 bg-clip-text text-transparent">
-                {t('hero.title3')}
-              </span>
+      {/* Hero Section */}
+      <section className="relative h-[70vh] w-full overflow-hidden bg-black flex items-center">
+        <div className="absolute inset-0 opacity-60">
+           <img 
+             src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&q=80&w=2000" 
+             className="w-full h-full object-cover"
+             alt="Hero"
+           />
+        </div>
+        <div className="section-container relative z-10 text-white">
+          <div className="max-w-2xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.4em] mb-4 text-white/80">{t('trending')}</p>
+            <h1 className="text-5xl md:text-7xl font-black tracking-tighter uppercase leading-[0.9] mb-6">
+              {t('heroTitle')}
             </h1>
-
-            <p className="text-rose-100/80 text-sm md:text-base mb-8 max-w-lg mx-auto md:mx-0 font-medium leading-relaxed">
-              {t('hero.subtitle')}
+            <p className="text-sm md:text-lg text-white/70 font-medium mb-8 max-w-lg leading-relaxed">
+              {t('heroSubtitle')}
             </p>
-
-            <div className="flex flex-wrap justify-center md:justify-start gap-3">
-              <Link
-                href="/products"
-                className="bg-white text-black font-black px-8 py-3.5 rounded-none transition-all hover:bg-rose-200 uppercase text-[11px] tracking-[0.25em] shadow-[6px_6px_0_0_rgba(0,0,0,0.35)] hover:shadow-[3px_3px_0_0_rgba(0,0,0,0.35)] hover:translate-x-[3px] hover:translate-y-[3px]"
-              >
-                {t('hero.ctaPrimary')}
+            <div className="flex flex-wrap gap-4">
+              <Link href="/products" className="btn-black bg-white text-black hover:bg-gray-100">
+                {t('exploreBtn')}
               </Link>
-              <Link
-                href="/products?newArrival=true"
-                className="border border-white/40 text-white font-black px-8 py-3.5 rounded-none hover:bg-white hover:text-black uppercase text-[11px] tracking-[0.25em] transition-all"
-              >
-                {t('hero.ctaSecondary')}
+              <Link href="/track" className="btn-outline bg-transparent text-white border-white hover:bg-white/10">
+                {t('trackBtn')}
               </Link>
             </div>
-          </div>
-
-          {/* right logo display */}
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-radial from-amber-300/20 to-transparent blur-2xl" />
-            <div className="relative w-full max-w-sm aspect-square">
-              <div className="absolute inset-0 border border-white/15" />
-              <div className="absolute inset-3 border border-white/10" />
-              <div className="absolute inset-6 border border-amber-300/20" />
-              <div className="absolute inset-0 flex items-center justify-center p-10">
-                <img
-                  src="/logo.svg"
-                  alt="Azmarino"
-                  className="w-full h-full object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.4)]"
-                />
-              </div>
-              {/* corner marks */}
-              <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-amber-300" />
-              <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-amber-300" />
-              <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-amber-300" />
-              <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-amber-300" />
-            </div>
-          </div>
-        </div>
-
-        {/* Stats band */}
-        <div className="relative border-t border-white/10 bg-black/20 backdrop-blur-sm">
-          <div className="max-w-7xl mx-auto px-4 py-5 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {STATS.map((s) => (
-              <div key={s.key} className="text-center md:text-start">
-                <div className="text-2xl md:text-3xl font-black text-white tracking-tighter">{s.value}</div>
-                <div className="text-[9px] font-black uppercase tracking-[0.25em] text-rose-200/70 mt-1">
-                  {t(s.key)}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* Trust bar */}
-      <section className="py-5 border-b border-gray-100 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Trust Bar */}
+      <section className="border-b border-gray-100 bg-gray-50/50 py-10">
+        <div className="section-container">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {TRUST.map(({ Icon, key }) => (
-              <div
-                key={key}
-                className="flex items-center justify-center md:justify-start gap-3 px-3 py-2 border border-transparent hover:border-gray-200 transition-colors"
-              >
-                <span className="flex items-center justify-center w-8 h-8 bg-rose-50 text-rose-600 border border-rose-100">
-                  <Icon className="w-4 h-4" />
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900">{t(key)}</span>
+              <div key={key} className="flex flex-col items-center text-center group">
+                <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center text-black mb-4 group-hover:bg-black group-hover:text-white transition-all">
+                  <Icon className="w-5 h-5" />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-black">{t(key)}</p>
+                <p className="text-[9px] font-bold text-gray-400 uppercase mt-1">{t(`${key}Sub`)}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-          <div>
-            <h2 className="text-[11px] font-black uppercase tracking-[0.3em] text-rose-600 mb-2">
-              {t('categories.eyebrow')}
-            </h2>
-            <h3 className="text-3xl md:text-4xl font-black text-black uppercase tracking-tighter">
-              {t('categories.title')}
-            </h3>
+      {/* Categories Grid */}
+      <section className="py-20">
+        <div className="section-container">
+          <div className="flex flex-col items-center mb-12">
+            <p className="label-caps mb-2">{t('shop')}</p>
+            <h2 className="heading-lg text-center">{t('categoriesTitle')}</h2>
           </div>
-          <div className="hidden md:block h-px flex-1 bg-gradient-to-r from-gray-300 to-transparent mx-6" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {CATEGORIES.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/products?category=${cat.id}`}
-                className={`group relative aspect-[16/10] overflow-hidden bg-gradient-to-br ${cat.tone} flex flex-col justify-end p-5 border border-black/10 hover:border-black transition-all`}
-              >
-                <div className="absolute inset-0 opacity-[0.06] mix-blend-overlay"
-                  style={{
-                    backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
-                    backgroundSize: '16px 16px',
-                  }}
-                />
-                <div className="relative">
-                  <p className="text-white/70 text-[9px] font-black uppercase tracking-[0.3em] mb-1">
-                    {t('categories.eyebrow')}
-                  </p>
-                  <p className="text-white font-black text-xl md:text-2xl uppercase tracking-tighter">
-                    {t(cat.key)}
-                  </p>
-                  <p className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-white/90 group-hover:text-white">
-                    {t('hero.ctaPrimary')}
-                    <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
-                  </p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {CATEGORIES.map(cat => (
+              <Link key={cat.id} href={`/products?category=${cat.id}`} className="group relative aspect-[4/5] overflow-hidden rounded-xl border border-gray-100">
+                <img src={cat.img} alt={cat.key} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-end p-4">
+                  <p className="text-white text-[10px] font-black uppercase tracking-widest">{t(`categories.${cat.key}`)}</p>
                 </div>
               </Link>
             ))}
@@ -235,217 +130,107 @@ export default function HomeClient({
         </div>
       </section>
 
-      {/* Top rated strip */}
-      {topRated.length > 0 && (
-        <section className="py-10 bg-gradient-to-b from-white to-gray-50">
-          <div className="max-w-7xl mx-auto px-4 mb-5 flex items-end justify-between">
-            <h2 className="text-xl md:text-2xl font-black text-black tracking-tighter uppercase">
-              {t('section.topRated')}
-            </h2>
-            <Link
-              href="/products"
-              className="text-[10px] font-black uppercase tracking-widest text-gray-600 hover:text-rose-600"
-            >
-              {t('hero.ctaPrimary')} →
-            </Link>
-          </div>
-          <div className="max-w-7xl mx-auto px-2 sm:px-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-              {topRated.slice(0, 12).map((p) => (
-                <ProductCard key={p._id} product={p} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Editorial promo */}
-      <section className="py-16 bg-black text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
-          style={{
-            backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-            backgroundSize: '24px 24px',
-          }}
-        />
-        <div className="relative max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-rose-400 mb-4">
-              {t('promo.eyebrow')}
-            </p>
-            <h3 className="text-4xl md:text-5xl font-black tracking-tighter uppercase mb-5">
-              {t('promo.title')}
-            </h3>
-            <p className="text-gray-300 text-sm max-w-lg mb-7 leading-relaxed">{t('promo.body')}</p>
-            <Link
-              href="/products"
-              className="inline-flex items-center gap-2 bg-rose-600 hover:bg-white hover:text-black text-white font-black px-7 py-3.5 uppercase text-[11px] tracking-[0.25em] transition-colors"
-            >
-              {t('promo.cta')} →
-            </Link>
-          </div>
-          <div className="relative aspect-square max-w-sm mx-auto w-full">
-            <div className="absolute inset-0 border border-white/10" />
-            <div className="absolute inset-4 border border-rose-500/30" />
-            <div className="absolute inset-0 flex items-center justify-center p-10">
-              <img src="/logo.svg" alt="Azmarino" className="w-full h-full object-contain" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* New arrivals */}
-      {newArrivals.length > 0 && (
-        <section className="py-10 bg-white">
-          <div className="max-w-7xl mx-auto px-4 mb-5 flex items-end justify-between">
-            <h2 className="text-xl md:text-2xl font-black text-black tracking-tighter uppercase">
-              {t('section.newArrivals')}
-            </h2>
-            <Link
-              href="/products?newArrival=true"
-              className="text-[10px] font-black uppercase tracking-widest text-gray-600 hover:text-rose-600"
-            >
-              {t('hero.ctaPrimary')} →
-            </Link>
-          </div>
-          <div className="max-w-7xl mx-auto px-2 sm:px-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-              {newArrivals.slice(0, 12).map((p) => (
-                <ProductCard key={p._id} product={p} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Infinite recommended grid */}
-      <section className="py-10 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 mb-5 flex items-center justify-between">
-          <h2 className="text-xl md:text-2xl font-black text-black tracking-tighter uppercase">
-            {t('section.recommended')}
-          </h2>
-          <div className="h-px flex-1 bg-gray-200 mx-4" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-2 sm:px-4">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2">
-            {products.map((p) => (
-              <ProductCard key={p._id} product={p} />
-            ))}
-          </div>
-
-          <div ref={loader} className="py-12 flex justify-center w-full">
-            {loading && (
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-6 h-6 border-2 border-rose-600 border-t-transparent rounded-none animate-spin" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                  {t('product.loading')}
-                </span>
+      {/* Top Rated & New Arrivals Combined Grid */}
+      <section className="py-20 bg-gray-50/30">
+        <div className="section-container">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+            {/* Top Rated */}
+            <div>
+              <div className="flex items-end justify-between mb-8">
+                <div>
+                  <p className="label-caps mb-1">{t('trending')}</p>
+                  <h2 className="heading-lg">{t('topRated')}</h2>
+                </div>
+                <Link href="/products" className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black">
+                  {t('discoverMore')} →
+                </Link>
               </div>
-            )}
-            {!hasMore && (
-              <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">
-                {t('product.endOfCollection')}
-              </span>
-            )}
+              <div className="grid grid-cols-2 gap-4">
+                {topRated.slice(0, 4).map(p => <ProductCard key={p._id} product={p} />)}
+              </div>
+            </div>
+
+            {/* New Arrivals */}
+            <div>
+              <div className="flex items-end justify-between mb-8">
+                <div>
+                  <p className="label-caps mb-1">{t('trending')}</p>
+                  <h2 className="heading-lg">{t('newArrivals')}</h2>
+                </div>
+                <Link href="/products?newArrival=true" className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black">
+                  {t('discoverMore')} →
+                </Link>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {newArrivals.slice(0, 4).map(p => <ProductCard key={p._id} product={p} />)}
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Newsletter strip */}
-      <section className="py-14 bg-gradient-to-r from-rose-700 via-rose-600 to-rose-700 text-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-rose-200 mb-3">
-            {t('footer.newsletter')}
-          </p>
-          <h3 className="text-3xl md:text-4xl font-black uppercase tracking-tighter mb-3">
-            {t('promo.title')}
-          </h3>
-          <p className="text-rose-100/80 text-sm mb-6">{t('footer.newsletterSubtitle')}</p>
-          <form
-            className="flex max-w-md mx-auto gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
-          >
-            <input
-              type="email"
-              placeholder={t('footer.emailPlaceholder')}
-              className="flex-1 px-4 py-3 bg-white text-black text-xs font-bold rounded-none placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-black"
-            />
-            <button
-              type="submit"
-              className="bg-black text-white px-6 py-3 text-[10px] font-black uppercase tracking-widest rounded-none hover:bg-white hover:text-black transition-colors"
-            >
-              {t('footer.subscribe')}
-            </button>
-          </form>
+      {/* Infinite Product Grid */}
+      <section className="py-24 border-t border-gray-100">
+        <div className="section-container">
+          <div className="flex flex-col items-center mb-16">
+            <p className="label-caps mb-2">{t('discoverMore')}</p>
+            <h2 className="heading-lg">{t('heroTitle')}</h2>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8">
+            {products.map(p => <ProductCard key={p._id} product={p} />)}
+          </div>
+
+          <div ref={loaderRef} className="py-20 flex flex-col items-center gap-4">
+            {loading ? (
+              <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" />
+            ) : !hasMore ? (
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300 italic">
+                The end of the collection.
+              </p>
+            ) : null}
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-white pt-16 pb-10 border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-4 gap-10 mb-12">
-          <div className="md:col-span-2">
-            <div className="flex items-center gap-3 mb-4">
-              <img src="/logo.svg" alt="Azmarino" className="w-12 h-12" />
-              <div>
-                <div className="text-xl font-black tracking-tight">Azmarino</div>
-                <div className="text-[9px] font-black uppercase tracking-[0.3em] text-rose-400">
-                  {t('footer.tagline')}
+      <footer className="bg-black text-white py-24">
+        <div className="section-container">
+          <div className="flex flex-col md:flex-row justify-between gap-16">
+            <div className="max-w-sm">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="relative w-12 h-12 overflow-hidden rounded-xl bg-white p-1">
+                  <img src="/logo.jpg" alt="Azmarino" className="w-full h-full object-contain" />
                 </div>
+                <p className="text-xl font-black uppercase tracking-tighter italic">Azmarino</p>
+              </div>
+              <p className="text-gray-400 text-sm leading-relaxed font-medium">
+                Azmarino is a premier global e-commerce destination for curated high-end fashion, electronics, and lifestyle products. Designed for the modern discerning shopper.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-12">
+              <div className="flex flex-col gap-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Navigation</p>
+                <Link href="/products" className="text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-gray-400">{t('shop')}</Link>
+                <Link href="/track" className="text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-gray-400">{t('track')}</Link>
+                <Link href="/orders" className="text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-gray-400">{t('orders')}</Link>
+              </div>
+              <div className="flex flex-col gap-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Support</p>
+                <a href="mailto:support@azmarino.online" className="text-xs font-bold uppercase tracking-widest hover:text-white transition-colors text-gray-400">Email</a>
+                <span className="text-xs font-bold uppercase tracking-widest text-gray-400 cursor-default">Help Center</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-gray-400 cursor-default">Returns</span>
               </div>
             </div>
-            <p className="text-gray-400 text-xs max-w-md leading-relaxed">{t('promo.body')}</p>
           </div>
-
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-400 mb-4">
-              {t('footer.shop')}
-            </h4>
-            <ul className="space-y-2.5 text-[11px] font-bold text-gray-400">
-              <li>
-                <Link href="/products" className="hover:text-white">
-                  {t('nav.shop')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/track" className="hover:text-white">
-                  {t('footer.track')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/orders" className="hover:text-white">
-                  {t('footer.orders')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-rose-400 mb-4">
-              {t('footer.support')}
-            </h4>
-            <ul className="space-y-2.5 text-[11px] font-bold text-gray-400">
-              <li>
-                <a href="mailto:support@azmarino.online" className="hover:text-white">
-                  support@azmarino.online
-                </a>
-              </li>
-              <li>
-                <Link href="/profile" className="hover:text-white">
-                  {t('nav.profile')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-[10px] text-gray-600 font-bold tracking-widest uppercase">
-            © {new Date().getFullYear()} Azmarino Premium. {t('footer.rights')}
-          </p>
-          <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
-            <span>EN · ትግርኛ · አማርኛ · العربية · FR · IT</span>
+          <div className="mt-20 pt-8 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-[9px] font-black uppercase tracking-[0.3em] text-white/20">© {new Date().getFullYear()} Azmarino Premium Global. ALL RIGHTS RESERVED.</p>
+            <div className="flex gap-6 opacity-30 grayscale invert brightness-0">
+               <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-3" />
+               <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-5" />
+               <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="Paypal" className="h-4" />
+            </div>
           </div>
         </div>
       </footer>

@@ -60,6 +60,7 @@ export interface CartItem {
   selectedSize?: string;
   selectedColor?: string;
   variantName?: string;
+  selectedVariantId?: string;
 }
 
 export interface User {

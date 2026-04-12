@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import Navbar from '../../components/Navbar';
+import { useLang } from '../../context/LanguageContext';
 import type { User } from '../../lib/api';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.azmarino.online/api';
@@ -40,6 +41,7 @@ const emptyPasswordForm: PasswordForm = {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { t } = useLang();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ProfileForm>(emptyProfileForm);
   const [passwords, setPasswords] = useState<PasswordForm>(emptyPasswordForm);
@@ -265,13 +267,11 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-white">
         <Navbar />
-        <main className="section-shell py-16">
-          <div className="surface-solid rounded-[2rem] px-6 py-16 text-center">
-            <div className="mx-auto h-10 w-10 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
-          </div>
-        </main>
+        <div className="section-container py-40 flex justify-center">
+           <div className="w-10 h-10 border-2 border-black border-t-transparent rounded-full animate-spin" />
+        </div>
       </div>
     );
   }

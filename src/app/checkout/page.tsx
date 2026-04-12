@@ -25,7 +25,7 @@ interface CheckoutCartItem extends CartItem {
 export default function CheckoutPage() {
   const router = useRouter();
   const { t, lang } = useLang();
-  const [items, setItems] = useState<CartItem[]>([]);
+  const [items, setItems] = useState<CheckoutCartItem[]>([]);
   const [userEmail, setUserEmail] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
